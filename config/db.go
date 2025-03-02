@@ -5,12 +5,14 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
+	"os"
 )
 
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	db, err := gorm.Open(postgres.Open("postgres://avnadmin:AVNS_T-ehBEdXEPR6M3dQWeX@pg-18b4c785-letimapro23-87d3.h.aivencloud.com:20123/Zidibackend?sslmode=require"), &gorm.Config{})
+	dsn := os.Getenv("DATABASE_URL")
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
