@@ -1,0 +1,1024 @@
+openapi: 3.0.0
+info:
+  title: ZidiBackend API
+  version: 1.0.0
+  description: API for managing organizations and users in ZidiBackend
+
+paths:
+  /organizations:
+    post:
+      summary: Create an organization
+      operationId: CreateOrganization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Organization"
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    get:
+      summary: Get all organizations
+      operationId: GetOrganizations
+      responses:
+        "200":
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Organization"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /organizations/{organization_id}:
+    get:
+      summary: Get an organization by ID
+      operationId: GetOrganizationById
+      parameters:
+        - name: organization_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      summary: Update an organization
+      operationId: UpdateOrganization
+      parameters:
+        - name: organization_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Organization"
+      responses:
+        "200":
+          description: Organization updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      summary: Delete an organization
+      operationId: DeleteOrganization
+      parameters:
+        - name: organization_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Organization deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /organizations/{organization_id}/users:
+    get:
+      summary: Get all users in an organization
+      operationId: GetUsersByOrganization
+      parameters:
+        - name: organization_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of users in the organization
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /organizations/search:
+    get:
+      summary: Get an organization by name
+      operationId: GetOrganizationByName
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /users:
+    post:
+      summary: Create a user
+      operationId: CreateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequestBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
+    get:
+      summary: Get all users
+      operationId: GetUsers
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /users/email:
+    get:
+      summary: Get a user by email
+      operationId: GetUserByEmail
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /users/{user_id}:
+    get:
+      summary: Get a user by ID
+      operationId: GetUserById
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      summary: Update a user
+      operationId: UpdateUser
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      summary: Delete a user
+      operationId: DeleteUser
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: User deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /users/{user_id}/password:
+    put:
+      summary: Update user password
+      operationId: UpdateUserPassword
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - old_password
+                - new_password
+              properties:
+                old_password:
+                  type: string
+                  format: password
+                  description: The current password of the user.
+                new_password:
+                  type: string
+                  format: password
+                  description: The new password to set.
+      responses:
+        "200":
+          description: Password updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Password updated successfully.
+        "400":
+          description: Bad request (e.g., missing fields, weak password).
+        "401":
+          description: Unauthorized - Incorrect old password.
+        "404":
+          description: User not found.
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /auth/login:
+    post:
+      summary: User login
+      operationId: LoginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT access token
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          description: Unauthorized - Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /campaigns:
+    post:
+      summary: Create a new campaign
+      operationId: createCampaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Campaign'
+      responses:
+        '201':
+          description: Campaign created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '400':
+          description: Invalid input
+
+    get:
+      summary: Get all campaigns
+      operationId: getAllCampaigns
+      responses:
+        '200':
+          description: A list of campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Campaign'
+
+  /customers:
+    post:
+      summary: Create a new customer
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      responses:
+        '201':
+          description: Customer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          description: Invalid input
+
+    get:
+      summary: Get all customers
+      operationId: getAllCustomers
+      responses:
+        '200':
+          description: A list of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+
+  /customers/organization:
+      get:
+        summary: Get all customers for a specific organization
+        operationId: getCustomersByOrganization
+        parameters:
+          - name: organizationId
+            in: query
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          '200':
+            description: List of customers for the specified organization
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Customer'
+          '400':
+            description: Missing or invalid organizationId
+          '404':
+            description: No customers found for this organization
+
+  /customers/{id}:
+      get:
+        summary: Get a customer by ID
+        operationId: getCustomerById
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          '200':
+            description: Customer found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Customer'
+          '404':
+            description: Customer not found
+
+      put:
+        summary: Update a customer by ID
+        operationId: updateCustomer
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        responses:
+          '200':
+            description: Customer updated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Customer'
+          '404':
+            description: Customer not found
+
+      delete:
+        summary: Delete a customer by ID
+        operationId: deleteCustomer
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          '204':
+            description: Customer deleted successfully
+          '404':
+            description: Customer not found
+
+
+  /campaigns/organization:
+      get:
+        summary: Get all campaigns for a specific organization
+        operationId: getCampaignsByOrganization
+        parameters:
+          - name: organizationId
+            in: query
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          '200':
+            description: List of campaigns for the specified organization
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Campaign'
+          '400':
+            description: Missing or invalid organizationId
+          '404':
+            description: No campaigns found for this organization
+
+  /campaigns/{id}:
+      get:
+        summary: Get a campaign by ID
+        operationId: getCampaignById
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          '200':
+            description: Campaign found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Campaign'
+          '404':
+            description: Campaign not found
+
+      put:
+        summary: Update a campaign by ID
+        operationId: updateCampaign
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        responses:
+          '200':
+            description: Campaign updated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Campaign'
+          '404':
+            description: Campaign not found
+
+      delete:
+        summary: Delete a campaign by ID
+        operationId: deleteCampaign
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          '204':
+            description: Campaign deleted successfully
+          '404':
+            description: Campaign not found
+
+  /campaigns/{campaignId}/questions:
+    get:
+      summary: Get all questions for a campaign
+      tags:
+        - Questions
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A list of questions for the campaign
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Question'
+    post:
+      summary: Create a new question for a campaign
+      tags:
+        - Questions
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Question'
+      responses:
+        '201':
+          description: Question created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+
+  /questions/{questionId}:
+      delete:
+        summary: Delete a question
+        tags:
+          - Questions
+        parameters:
+          - name: questionId
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          '204':
+            description: Question deleted successfully
+
+  /questions/{questionId}/responses:
+      get:
+        summary: Get all responses for a question
+        tags:
+          - Responses
+        parameters:
+          - name: questionId
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          '200':
+            description: A list of responses for the question
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Response'
+      post:
+        summary: Create a response for a question
+        tags:
+          - Responses
+        parameters:
+          - name: questionId
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        responses:
+          '201':
+            description: Response created successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Response'
+
+
+
+components:
+  schemas:
+    Organization:
+      type: object
+      required:
+        - id
+        - email
+        - contact_person_name
+        - contact_person_phone
+        - address
+        - industry
+        - company_size
+        - company_name
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        contact_person_name:
+          type: string
+        contact_person_phone:
+          type: string
+        address:
+          type: string
+        industry:
+          type: string
+        company_size:
+          type: integer
+        company_name:
+          type: string
+    Campaign:
+      type: object
+      required:
+        - id
+        - campaignName
+        - couponId
+        - characterType
+        - couponLength
+        - welcomeMessage
+        - questionNumber
+        - amount
+        - status
+        - organizationId
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        campaignName:
+          type: string
+          example: "Summer Promo"
+        couponId:
+          type: string
+          example: "Alphanumeric"
+        characterType:
+          type: string
+          example: "Alphanumeric"
+        couponLength:
+          type: integer
+          example: 10
+        welcomeMessage:
+          type: string
+          example: "Welcome to our summer campaign!"
+        questionNumber:
+          type: integer
+          example: 5
+        amount:
+          type: number
+          format: float
+          example: 100.50
+        status:
+          type: string
+          example: "active"
+        organizationId:
+          type: string
+          format: uuid
+          example: "d63e4c28-f8d2-4c39-b3bb-92cd5b998a21"
+    User:
+      type: object
+      required:
+        - id
+        - firstname
+        - lastname
+        - email
+        - address
+        - password
+        - role
+        - organization_id
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstname:
+          type: string
+        lastname:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+        password:
+          type: string
+          format: password
+        role:
+          type: string
+        organization_id:
+          type: string
+          format: uuid
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    CreateUserRequestBody:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - phoneNumber
+        - address
+        - role
+        - organization_id
+        - password
+        - confirmPassword
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+        password:
+          type: string
+          format: password
+        address:
+          type: string
+        confirmPassword:
+          type: string
+          format: password
+        role:
+          type: string
+        organization_id:
+          type: string
+          format: uuid
+    Customer:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+        - phone
+        - email
+        - feedback
+        - network
+        - amount
+        - status
+        - organizationId
+        - campaignId
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        phone:
+          type: string
+          example: "+1234567890"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        feedback:
+          type: string
+          example: "Great service!"
+        network:
+          type: string
+          example: "MTN"
+        amount:
+          type: number
+          format: float
+          example: 100.50
+        status:
+          type: string
+          example: "active"
+        organizationId:
+          type: string
+          format: uuid
+          example: "d63e4c28-f8d2-4c39-b3bb-92cd5b998a21"
+        campaignId:
+          type: string
+          format: uuid
+          example: "mka98yd6-hh72-kj86-b3bb-92cd5b998a21"
+    Question:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+          campaignId:
+            type: string
+            format: uuid
+          text:
+            type: string
+          type:
+            type: string
+            enum: [ text, multiple_choice, rating ]
+          options:
+            type: string
+            nullable: true
+    Response:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+          questionId:
+            type: string
+            format: uuid
+          customerId:
+            type: string
+            format: uuid
+          answer:
+            type: string
+#    CreateCustomerBody:
+#      type: object
+#      required:
+#        - firstName
+#        - lastName
+#        - phone
+#        - email
+#        - network
+#        - campaignId
+#        - organizationId
+#      properties:
+#        firstName:
+#          type: string
+#        lastName:
+#          type: string
+#        phone:
+#          type: string
+#        email:
+#          type: string
+#          format: email
+#        feedback:
+#          type: string
+#        network:
+#          type: string
+#        organizationId:
+#          type: string
+#          format: uuid
+#        campaignId:
+#          type: string
+#          format: uuid
+#    UpdateCustomerRequest:
+#      type: object
+#      properties:
+#        firstName:
+#          type: string
+#        lastName:
+#          type: string
+#        phone:
+#          type: string
+#        email:
+#          type: string
+#          format: email
+#        feedback:
+#          type: string
+#        network:
+#          type: string
+#        amount:
+#          type: number
+#          format: float
+#        status:
+#          type: string
+
+    Error:
+      type: object
+      required:
+        - message
+        - error_code
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequestError:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    InternalServerError:
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
