@@ -19,10 +19,10 @@ func NewResponseService(responseRepo repository.ResponseRepository) *ResponseSer
 
 func (s *ResponseService) CreateResponse(ctx context.Context, req api.Response) (*api.Response, error) {
 	newResponse := &models.Response{
-		ID:         *req.Id,
-		CustomerID: *req.CustomerId,
-		QuestionID: *req.QuestionId,
-		Answer:     *req.Answer,
+		ID:         req.Id,
+		CustomerID: req.CustomerId,
+		QuestionID: req.QuestionId,
+		Answer:     req.Answer,
 	}
 
 	response, err := s.responseRepo.CreateResponse(newResponse)
@@ -50,9 +50,9 @@ func (s *ResponseService) GetResponsesByQuestion(ctx context.Context, questionID
 // Helper function to convert models.Response to api.Response
 func mapToAPIResponse(response *models.Response) *api.Response {
 	return &api.Response{
-		Id:         &response.ID,
-		CustomerId: &response.CustomerID,
-		QuestionId: &response.QuestionID,
-		Answer:     &response.Answer,
+		Id:         response.ID,
+		CustomerId: response.CustomerID,
+		QuestionId: response.QuestionID,
+		Answer:     response.Answer,
 	}
 }

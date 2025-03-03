@@ -912,6 +912,11 @@ components:
           example: "mka98yd6-hh72-kj86-b3bb-92cd5b998a21"
     Question:
         type: object
+        required:
+          - id
+          - campaignId
+          - text
+          - type
         properties:
           id:
             type: string
@@ -929,6 +934,11 @@ components:
             nullable: true
     Response:
         type: object
+        required:
+          - id
+          - questionId
+          - customerId
+          - answer
         properties:
           id:
             type: string

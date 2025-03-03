@@ -22,7 +22,7 @@ func (r *CustomerPG) Create(customer *models.Customer) (*models.Customer, error)
 }
 
 func (r *CustomerPG) UpdateByID(id uuid.UUID, customer *models.Customer) (*models.Customer, error) {
-	if err := r.db.Model(&models.Customer{}).Updates(customer).Error; err != nil {
+	if err := r.db.Model(&models.Customer{}).Where("id = ?", id).Updates(customer).Error; err != nil {
 		return nil, err
 	}
 	return customer, nil

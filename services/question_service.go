@@ -19,10 +19,10 @@ func NewQuestionService(questionRepo repository.QuestionRepository) *QuestionSer
 
 func (s *QuestionService) CreateQuestion(ctx context.Context, req api.Question) (*api.Question, error) {
 	newQuestion := &models.Question{
-		ID:         *req.Id,
-		CampaignID: *req.CampaignId,
-		Text:       *req.Text,
-		Type:       string(*req.Type),
+		ID:         req.Id,
+		CampaignID: req.CampaignId,
+		Text:       req.Text,
+		Type:       string(req.Type),
 		Options:    req.Options,
 	}
 
@@ -64,10 +64,10 @@ func (s *QuestionService) DeleteQuestion(ctx context.Context, id uuid.UUID) erro
 // Helper function to convert models.Question to api.Question
 func mapToAPIQuestion(question *models.Question) *api.Question {
 	return &api.Question{
-		Id:         &question.ID,
-		CampaignId: &question.CampaignID,
-		Text:       &question.Text,
-		Type:       (*api.QuestionType)(&question.Type),
+		Id:         question.ID,
+		CampaignId: question.CampaignID,
+		Text:       question.Text,
+		Type:       api.QuestionType(question.Type),
 		Options:    question.Options,
 	}
 }
