@@ -47,7 +47,7 @@ func (s Server) PostQuestionsQuestionIdResponses(c *fiber.Ctx, questionId openap
 		})
 	}
 
-	newResponse.QuestionId = &questionId
+	newResponse.QuestionId = questionId
 
 	createdResponse, err := s.responseService.CreateResponse(context.Background(), *newResponse)
 	if err != nil {

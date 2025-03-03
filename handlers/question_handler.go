@@ -47,7 +47,7 @@ func (s Server) PostCampaignsCampaignIdQuestions(c *fiber.Ctx, campaignId openap
 		})
 	}
 
-	newQuestion.CampaignId = &campaignId
+	newQuestion.CampaignId = campaignId
 
 	createdQuestion, err := s.questionService.CreateQuestion(context.Background(), *newQuestion)
 	if err != nil {
