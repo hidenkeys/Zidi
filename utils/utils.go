@@ -3,6 +3,7 @@ package utils
 import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"math/rand"
 	"time"
 )
 
@@ -19,4 +20,34 @@ func GenerateJWT(userID uuid.UUID, role string, orgID uuid.UUID) (string, error)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)
+}
+
+func GenerateTokens(charType string, length int, count int) []string {
+	charsets := map[string]string{
+		"alphanumerical": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+		"numeric":        "0123456789",
+	}
+
+	charset, ok := charsets[charType]
+	if !ok {
+		charset = charsets["alphanumerical"] // Default to alphanumerical
+	}
+
+	tokens := make(map[string]struct{})
+	var tokenList []string
+
+	for len(tokenList) < count {
+		token := make([]byte, length)
+		for i := range token {
+			token[i] = charset[rand.Intn(len(charset))]
+		}
+
+		tokenStr := string(token)
+		if _, exists := tokens[tokenStr]; !exists {
+			tokens[tokenStr] = struct{}{}
+			tokenList = append(tokenList, tokenStr)
+		}
+	}
+
+	return tokenList
 }

@@ -17,6 +17,29 @@ func NewCampaignService(campaignRepo repository.CampaignRepository) *CampaignSer
 	return &CampaignService{campaignRepo: campaignRepo}
 }
 
+func (s *CampaignService) CreateCoupon(ctx context.Context, req *api.Coupon) (*api.Coupon, error) {
+	newCoupon := &models.Coupon{
+		ID:         req.Id,
+		CampaignID: req.CampaignId,
+		Code:       req.Code,
+		Redeemed:   req.Redeemed,
+		RedeemedAt: req.RedeemedAt,
+	}
+
+	coupon, err := s.campaignRepo.CreateCoupon(newCoupon)
+	if err != nil {
+		return nil, err
+	}
+	finalCoupon := &api.Coupon{
+		Id:         coupon.ID,
+		Code:       coupon.Code,
+		Redeemed:   coupon.Redeemed,
+		RedeemedAt: coupon.RedeemedAt,
+		CampaignId: coupon.CampaignID,
+	}
+	return finalCoupon, nil
+}
+
 func (s *CampaignService) CreateCampaign(ctx context.Context, req api.Campaign) (*api.Campaign, error) {
 	newCampaign := &models.Campaign{
 		ID:             req.Id,
@@ -24,6 +47,7 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, req api.Campaign) 
 		CouponID:       req.CouponId,
 		CharacterType:  req.CharacterType,
 		CouponLength:   req.CouponLength,
+		CouponNumber:   req.CouponNumber,
 		OrganizationID: req.OrganizationId,
 		WelcomeMessage: req.WelcomeMessage,
 		QuestionNumber: req.QuestionNumber,
@@ -51,6 +75,25 @@ func (s *CampaignService) GetAllCampaigns(ctx context.Context) ([]api.Campaign, 
 	}
 
 	return finalCampaigns, nil
+}
+
+func (s *CampaignService) GetAllCoupons(ctx context.Context, campaignId uuid.UUID) ([]api.Coupon, error) {
+	coupons, err := s.campaignRepo.GetCouponByCampaign(campaignId)
+	if err != nil {
+		return nil, err
+	}
+	var finalCoupons []api.Coupon
+	for _, coupon := range coupons {
+		finalCoupons = append(finalCoupons, api.Coupon{
+			Id:         coupon.ID,
+			CampaignId: coupon.CampaignID,
+			Code:       coupon.Code,
+			Redeemed:   coupon.Redeemed,
+			RedeemedAt: coupon.RedeemedAt,
+		})
+	}
+
+	return finalCoupons, nil
 }
 
 func (s *CampaignService) GetCampaignsByOrganization(ctx context.Context, orgID uuid.UUID) ([]api.Campaign, error) {
@@ -82,6 +125,7 @@ func (s *CampaignService) UpdateCampaign(ctx context.Context, id uuid.UUID, req 
 		CouponID:       req.CouponId,
 		CharacterType:  req.CharacterType,
 		CouponLength:   req.CouponLength,
+		CouponNumber:   req.CouponNumber,
 		OrganizationID: req.OrganizationId,
 		WelcomeMessage: req.WelcomeMessage,
 		QuestionNumber: req.QuestionNumber,
@@ -109,6 +153,7 @@ func mapToAPICampaign(campaign *models.Campaign) *api.Campaign {
 		CouponId:       campaign.CouponID,
 		CharacterType:  campaign.CharacterType,
 		CouponLength:   campaign.CouponLength,
+		CouponNumber:   campaign.CouponNumber,
 		OrganizationId: campaign.OrganizationID,
 		WelcomeMessage: campaign.WelcomeMessage,
 		QuestionNumber: campaign.QuestionNumber,

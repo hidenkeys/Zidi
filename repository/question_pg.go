@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/models"
 	"gorm.io/gorm"
@@ -24,10 +25,12 @@ func (r *questionPG) GetQuestionsByCampaign(campaignID uuid.UUID) ([]models.Ques
 }
 
 func (r *questionPG) CreateQuestion(question *models.Question) (*models.Question, error) {
+	fmt.Println("this is question inn my question pg", question)
 	err := r.db.Create(question).Error
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("this is question after create in my question pg", question)
 	return question, nil
 }
 

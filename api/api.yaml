@@ -635,6 +635,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/Question'
 
+  /campaigns/{id}/coupons:
+    get:
+      summary: Get all coupons for a specific campaign
+      operationId: getCouponsByCampaign
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of coupons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Coupon'
+        '404':
+          description: Campaign not found
+
+
+  /campaigns/{id}/generate-tokens:
+    post:
+      summary: Generate tokens for a campaign
+      operationId: generateTokens
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tokens generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  campaignId:
+                    type: string
+                    format: uuid
+                  tokens:
+                    type: array
+                    items:
+                      type: string
+        '404':
+          description: Campaign not found
+        '400':
+          description: Campaign is not active
+        '500':
+          description: Internal server error
+
+
   /questions/{questionId}:
       delete:
         summary: Delete a question
@@ -739,6 +797,7 @@ components:
         - couponId
         - characterType
         - couponLength
+        - couponNumber
         - welcomeMessage
         - questionNumber
         - amount
@@ -761,6 +820,9 @@ components:
         couponLength:
           type: integer
           example: 10
+        couponNumber:
+          type: integer
+          example: 100
         welcomeMessage:
           type: string
           example: "Welcome to our summer campaign!"
@@ -930,7 +992,9 @@ components:
             type: string
             enum: [ text, multiple_choice, rating ]
           options:
-            type: string
+            type: array
+            items:
+              type: string
             nullable: true
     Response:
         type: object
@@ -951,7 +1015,35 @@ components:
             format: uuid
           answer:
             type: string
-#    CreateCustomerBody:
+    Coupon:
+      type: object
+      required:
+        - id
+        - campaignId
+        - code
+        - redeemed
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        campaignId:
+          type: string
+          format: uuid
+          example: "d63e4c28-f8d2-4c39-b3bb-92cd5b998a21"
+        code:
+          type: string
+          example: "A1B2C3D4"
+        redeemed:
+          type: boolean
+          example: false
+        redeemedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-03-04T12:34:56Z"
+
+    #    CreateCustomerBody:
 #      type: object
 #      required:
 #        - firstName

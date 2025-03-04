@@ -1,6 +1,8 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type Campaign struct {
 	ID             uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
@@ -8,6 +10,7 @@ type Campaign struct {
 	CouponID       string
 	CharacterType  string
 	CouponLength   int
+	CouponNumber   int
 	OrganizationID uuid.UUID
 	WelcomeMessage string `gorm:"type:text"`
 	QuestionNumber int

@@ -2,6 +2,9 @@ package services
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"gorm.io/datatypes"
 
 	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/api"
@@ -18,12 +21,20 @@ func NewQuestionService(questionRepo repository.QuestionRepository) *QuestionSer
 }
 
 func (s *QuestionService) CreateQuestion(ctx context.Context, req api.Question) (*api.Question, error) {
+	var optionsJSON datatypes.JSON
+	if req.Options != nil {
+		jsonData, err := json.Marshal(req.Options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal options: %w", err)
+		}
+		optionsJSON = datatypes.JSON(jsonData)
+	}
 	newQuestion := &models.Question{
 		ID:         req.Id,
 		CampaignID: req.CampaignId,
 		Text:       req.Text,
 		Type:       string(req.Type),
-		Options:    req.Options,
+		Options:    optionsJSON,
 	}
 
 	question, err := s.questionRepo.CreateQuestion(newQuestion)
@@ -31,6 +42,7 @@ func (s *QuestionService) CreateQuestion(ctx context.Context, req api.Question) 
 		return nil, err
 	}
 
+	fmt.Println("this is my question", question)
 	return mapToAPIQuestion(question), nil
 }
 
@@ -63,11 +75,16 @@ func (s *QuestionService) DeleteQuestion(ctx context.Context, id uuid.UUID) erro
 
 // Helper function to convert models.Question to api.Question
 func mapToAPIQuestion(question *models.Question) *api.Question {
+	var options []string
+	if question.Options != nil {
+		_ = json.Unmarshal(question.Options, &options) // Convert JSONB to []string
+	}
+
 	return &api.Question{
 		Id:         question.ID,
 		CampaignId: question.CampaignID,
 		Text:       question.Text,
 		Type:       api.QuestionType(question.Type),
-		Options:    question.Options,
+		Options:    &options,
 	}
 }

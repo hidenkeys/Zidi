@@ -22,6 +22,14 @@ func (r *CampaignRepoPG) Create(campaign *models.Campaign) (*models.Campaign, er
 	return campaign, nil
 }
 
+func (r *CampaignRepoPG) CreateCoupon(coupon *models.Coupon) (*models.Coupon, error) {
+	err := r.db.Create(coupon)
+	if err.Error != nil {
+		return nil, err.Error
+	}
+	return coupon, nil
+}
+
 func (r *CampaignRepoPG) GetAll() ([]models.Campaign, error) {
 	var campaigns []models.Campaign
 	err := r.db.Find(&campaigns)
@@ -38,6 +46,15 @@ func (r *CampaignRepoPG) GetAllByOrganization(orgID uuid.UUID) ([]models.Campaig
 		return nil, err.Error
 	}
 	return campaigns, nil
+}
+
+func (r *CampaignRepoPG) GetCouponByCampaign(campaignID uuid.UUID) ([]models.Coupon, error) {
+	var coupons []models.Coupon
+	err := r.db.Where("campaign_id = ?", campaignID).Find(&coupons)
+	if err.Error != nil {
+		return nil, err.Error
+	}
+	return coupons, nil
 }
 
 func (r *CampaignRepoPG) GetByID(id uuid.UUID) (*models.Campaign, error) {
