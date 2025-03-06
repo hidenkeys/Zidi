@@ -1,7 +1,6 @@
-package main
+package telegrambot
 
 import (
-	_ "encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -28,7 +27,8 @@ type Session struct {
 
 var sessions = make(map[int64]*Session)
 
-func main() {
+// StartBot initializes and runs the Telegram bot
+func StartBot() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("❌ Error loading .env file")
 	}
@@ -42,7 +42,7 @@ func main() {
 		log.Fatal("❌ Error initializing bot: ", err)
 	}
 
-	log.Println("🚀 Bot is running...")
+	log.Println("🚀 Telegram Bot is running...")
 
 	bot.Handle("/start", func(c tele.Context) error {
 		args := c.Args()
@@ -93,77 +93,79 @@ func main() {
 		return c.Send(fmt.Sprintf("👋 Welcome!\n%s\n\nLet's get started by gathering your details.\nWhat's your first name?", campaign.WelcomeMessage))
 	})
 
-	bot.Handle(tele.OnText, func(c tele.Context) error {
-		userID := c.Sender().ID
-		session, exists := sessions[userID]
-		if !exists {
-			return c.Send("❌ Please start with /start and a valid campaign ID.")
-		}
-
-		switch session.Step {
-		case 1:
-			session.Customer.FirstName = c.Text()
-			session.Step++
-			return c.Send("📛 What's your last name?")
-		case 2:
-			session.Customer.LastName = c.Text()
-			session.Step++
-			return c.Send("📧 What’s your email address?")
-		case 3:
-			session.Customer.Email = c.Text()
-			session.Step++
-			return c.Send("📞 Please provide your phone number:")
-		case 4:
-			session.Customer.Phone = c.Text()
-			session.Step++
-			return c.Send("📶 Which network provider do you use?")
-		case 5:
-			session.Customer.Network = c.Text()
-			session.Step++
-			return c.Send("💬 Any feedback you'd like to share?")
-		case 6:
-			session.Customer.Feedback = c.Text()
-			session.Customer.OrganizationID = session.OrganizationID
-			session.Customer.Amount = session.Amount
-
-			if err := saveCustomer(&session.Customer); err != nil {
-				log.Println("❌ Error saving customer:", err)
-				return c.Send("❌ An error occurred while saving your details. Please try again.")
-			}
-
-			if len(session.Questions) > 0 {
-				session.Step = 7
-				return c.Send(fmt.Sprintf("📋 Now, let's answer %d additional questions.\n%s", len(session.Questions), session.Questions[0].Text))
-			}
-
-			delete(sessions, userID)
-			return c.Send("🎉 Thank you! Your details have been successfully saved.")
-
-		case 7:
-			question := session.Questions[session.CurrentQuestion]
-			session.Responses = append(session.Responses, models.Response{
-				CustomerID: session.Customer.ID,
-				QuestionID: question.ID,
-				Answer:     c.Text(),
-			})
-
-			if session.CurrentQuestion+1 < len(session.Questions) {
-				session.CurrentQuestion++
-				return c.Send(session.Questions[session.CurrentQuestion].Text)
-			}
-
-			if err := saveResponses(session.Responses); err != nil {
-				log.Println("❌ Error saving responses:", err)
-				return c.Send("❌ An error occurred while saving your responses.")
-			}
-
-			delete(sessions, userID)
-			return c.Send("🎉 Thank you! Your details and responses have been successfully saved.")
-		}
-		return nil
-	})
+	bot.Handle(tele.OnText, handleResponses)
 
 	bot.Start()
+}
+
+func handleResponses(c tele.Context) error {
+	userID := c.Sender().ID
+	session, exists := sessions[userID]
+	if !exists {
+		return c.Send("❌ Please start with /start and a valid campaign ID.")
+	}
+
+	switch session.Step {
+	case 1:
+		session.Customer.FirstName = c.Text()
+		session.Step++
+		return c.Send("📛 What's your last name?")
+	case 2:
+		session.Customer.LastName = c.Text()
+		session.Step++
+		return c.Send("📧 What’s your email address?")
+	case 3:
+		session.Customer.Email = c.Text()
+		session.Step++
+		return c.Send("📞 Please provide your phone number:")
+	case 4:
+		session.Customer.Phone = c.Text()
+		session.Step++
+		return c.Send("📶 Which network provider do you use?")
+	case 5:
+		session.Customer.Network = c.Text()
+		session.Step++
+		return c.Send("💬 Any feedback you'd like to share?")
+	case 6:
+		session.Customer.Feedback = c.Text()
+		session.Customer.OrganizationID = session.OrganizationID
+		session.Customer.Amount = session.Amount
+
+		if err := saveCustomer(&session.Customer); err != nil {
+			log.Println("❌ Error saving customer:", err)
+			return c.Send("❌ An error occurred while saving your details. Please try again.")
+		}
+
+		if len(session.Questions) > 0 {
+			session.Step = 7
+			return c.Send(fmt.Sprintf("📋 Now, let's answer %d additional questions.\n%s", len(session.Questions), session.Questions[0].Text))
+		}
+
+		delete(sessions, userID)
+		return c.Send("🎉 Thank you! Your details have been successfully saved.")
+
+	case 7:
+		question := session.Questions[session.CurrentQuestion]
+		session.Responses = append(session.Responses, models.Response{
+			CustomerID: session.Customer.ID,
+			QuestionID: question.ID,
+			Answer:     c.Text(),
+		})
+
+		if session.CurrentQuestion+1 < len(session.Questions) {
+			session.CurrentQuestion++
+			return c.Send(session.Questions[session.CurrentQuestion].Text)
+		}
+
+		if err := saveResponses(session.Responses); err != nil {
+			log.Println("❌ Error saving responses:", err)
+			return c.Send("❌ An error occurred while saving your responses.")
+		}
+
+		delete(sessions, userID)
+		return c.Send("🎉 Thank you! Your details and responses have been successfully saved.")
+	}
+	return nil
 }
 
 func saveCustomer(customer *models.Customer) error {

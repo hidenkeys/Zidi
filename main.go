@@ -8,6 +8,7 @@ import (
 	"github.com/hidenkeys/zidibackend/handlers"
 	"github.com/hidenkeys/zidibackend/repository"
 	"github.com/hidenkeys/zidibackend/services"
+	"github.com/hidenkeys/zidibackend/telegrambot"
 	"github.com/joho/godotenv"
 	"log"
 )
@@ -42,10 +43,12 @@ func main() {
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000, https://www.zidi-admin.vercel.app, https://zidi-admin.vercel.app", // Allow your frontend origin
-		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",                                                         // Allow specific HTTP methods
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",                                             // Allow custom headers
+		AllowOrigins: "http://localhost:3000, https://www.zidi-admin.vercel.app, https://zidi-admin.vercel.app, https://zidi-frontend.vercel.app", // Allow your frontend origin
+		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",                                                                                           // Allow specific HTTP methods
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",                                                                               // Allow custom headers
 	}))
+
+	go telegrambot.StartBot()
 
 	api.RegisterHandlers(app, server)
 
