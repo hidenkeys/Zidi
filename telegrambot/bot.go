@@ -159,7 +159,7 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		// Save customer to DB
 		if err := saveCustomer(db, &session.Customer); err != nil {
 			log.Println("❌ Error saving customer:", err)
-			return c.Send("❌ An error occurred while saving your details. Please try again.")
+			return c.Send("❌ customer already exists for this campaign.")
 		}
 
 		// Move to questions if available
