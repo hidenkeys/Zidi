@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hidenkeys/zidibackend/config"
 	"github.com/hidenkeys/zidibackend/models"
 	"github.com/joho/godotenv"
 	tele "gopkg.in/telebot.v3"
@@ -28,11 +27,11 @@ type Session struct {
 var sessions = make(map[int64]*Session)
 
 // StartBot initializes and runs the Telegram bot
-func StartBot() {
+// StartBot initializes and runs the Telegram bot with a database connection
+func StartBot(db *gorm.DB) {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("❌ Error loading .env file")
 	}
-	config.ConnectDatabase()
 
 	bot, err := tele.NewBot(tele.Settings{
 		Token:  os.Getenv("TELEGRAM_API_KEY"),
@@ -56,7 +55,7 @@ func StartBot() {
 		}
 
 		var campaign models.Campaign
-		if err := config.DB.Where("id = ?", campaignID).First(&campaign).Error; err != nil {
+		if err := db.Where("id = ?", campaignID).First(&campaign).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				return c.Send("❌ Campaign not found.")
 			}
@@ -64,7 +63,7 @@ func StartBot() {
 		}
 
 		var questions []models.Question
-		if err := config.DB.Where("campaign_id = ?", campaignID).Find(&questions).Error; err != nil {
+		if err := db.Where("campaign_id = ?", campaignID).Find(&questions).Error; err != nil {
 			return c.Send("❌ Failed to fetch questions.")
 		}
 
@@ -72,7 +71,7 @@ func StartBot() {
 
 		// Check if the customer already exists for the same campaign
 		var existingCustomer models.Customer
-		if err := config.DB.Where("phone = ? AND campaign_id = ?", user.Recipient(), campaign.ID).First(&existingCustomer).Error; err == nil {
+		if err := db.Where("phone = ? AND campaign_id = ?", user.Recipient(), campaign.ID).First(&existingCustomer).Error; err == nil {
 			return c.Send("✅ You have already registered for this campaign. Stay tuned for the next one!")
 		}
 
@@ -93,12 +92,15 @@ func StartBot() {
 		return c.Send(fmt.Sprintf("👋 Welcome!\n%s\n\nLet's get started by gathering your details.\nWhat's your first name?", campaign.WelcomeMessage))
 	})
 
-	bot.Handle(tele.OnText, handleResponses)
+	// Pass the db to handleResponses
+	bot.Handle(tele.OnText, func(c tele.Context) error {
+		return handleResponses(c, db)
+	})
 
 	bot.Start()
 }
 
-func handleResponses(c tele.Context) error {
+func handleResponses(c tele.Context, db *gorm.DB) error {
 	userID := c.Sender().ID
 	session, exists := sessions[userID]
 	if !exists {
@@ -131,7 +133,7 @@ func handleResponses(c tele.Context) error {
 		session.Customer.OrganizationID = session.OrganizationID
 		session.Customer.Amount = session.Amount
 
-		if err := saveCustomer(&session.Customer); err != nil {
+		if err := saveCustomer(db, &session.Customer); err != nil {
 			log.Println("❌ Error saving customer:", err)
 			return c.Send("❌ An error occurred while saving your details. Please try again.")
 		}
@@ -157,7 +159,7 @@ func handleResponses(c tele.Context) error {
 			return c.Send(session.Questions[session.CurrentQuestion].Text)
 		}
 
-		if err := saveResponses(session.Responses); err != nil {
+		if err := saveResponses(db, session.Responses); err != nil {
 			log.Println("❌ Error saving responses:", err)
 			return c.Send("❌ An error occurred while saving your responses.")
 		}
@@ -168,14 +170,14 @@ func handleResponses(c tele.Context) error {
 	return nil
 }
 
-func saveCustomer(customer *models.Customer) error {
+func saveCustomer(db *gorm.DB, customer *models.Customer) error {
 	var existingCustomer models.Customer
-	if err := config.DB.Where("phone = ? AND campaign_id = ?", customer.Phone, customer.CampaignID).First(&existingCustomer).Error; err == nil {
+	if err := db.Where("phone = ? AND campaign_id = ?", customer.Phone, customer.CampaignID).First(&existingCustomer).Error; err == nil {
 		return fmt.Errorf("customer already exists for this campaign")
 	}
-	return config.DB.Create(customer).Error
+	return db.Create(customer).Error
 }
 
-func saveResponses(responses []models.Response) error {
-	return config.DB.Create(&responses).Error
+func saveResponses(db *gorm.DB, responses []models.Response) error {
+	return db.Create(&responses).Error
 }
