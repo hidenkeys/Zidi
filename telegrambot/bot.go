@@ -1,6 +1,7 @@
 package telegrambot
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -99,6 +100,23 @@ func StartBot(db *gorm.DB) {
 
 	bot.Start()
 }
+func parseOptions(optionsJSON []byte) ([]string, error) {
+	var options []string
+	if err := json.Unmarshal(optionsJSON, &options); err != nil {
+		return nil, err
+	}
+	return options, nil
+}
+
+// Helper to create option buttons
+func createOptionButtons(options []string) [][]tele.ReplyButton {
+	var buttons [][]tele.ReplyButton
+	for _, option := range options {
+		btn := tele.ReplyButton{Text: option}
+		buttons = append(buttons, []tele.ReplyButton{btn}) // One button per row
+	}
+	return buttons
+}
 
 func handleResponses(c tele.Context, db *gorm.DB) error {
 	userID := c.Sender().ID
@@ -112,41 +130,66 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		session.Customer.FirstName = c.Text()
 		session.Step++
 		return c.Send("📛 What's your last name?")
+
 	case 2:
 		session.Customer.LastName = c.Text()
 		session.Step++
 		return c.Send("📧 What’s your email address?")
+
 	case 3:
 		session.Customer.Email = c.Text()
 		session.Step++
 		return c.Send("📞 Please provide your phone number:")
+
 	case 4:
 		session.Customer.Phone = c.Text()
 		session.Step++
 		return c.Send("📶 Which network provider do you use?")
+
 	case 5:
 		session.Customer.Network = c.Text()
 		session.Step++
 		return c.Send("💬 Any feedback you'd like to share?")
+
 	case 6:
 		session.Customer.Feedback = c.Text()
 		session.Customer.OrganizationID = session.OrganizationID
 		session.Customer.Amount = session.Amount
 
+		// Save customer to DB
 		if err := saveCustomer(db, &session.Customer); err != nil {
 			log.Println("❌ Error saving customer:", err)
 			return c.Send("❌ An error occurred while saving your details. Please try again.")
 		}
 
+		// Move to questions if available
 		if len(session.Questions) > 0 {
 			session.Step = 7
-			return c.Send(fmt.Sprintf("📋 Now, let's answer %d additional questions.\n%s", len(session.Questions), session.Questions[0].Text))
+			firstQuestion := session.Questions[0]
+
+			// Parse options if present
+			options, err := parseOptions(firstQuestion.Options)
+			if err != nil {
+				log.Println("❌ Error parsing options:", err)
+				return c.Send("❌ Error retrieving question options. Please try again later.")
+			}
+
+			// Send question with buttons if there are options
+			if len(options) > 0 && firstQuestion.Type == "multiple_choice" {
+				btns := createOptionButtons(options)
+				return c.Send(fmt.Sprintf("📋 %s", firstQuestion.Text), &tele.ReplyMarkup{ReplyKeyboard: btns})
+			}
+
+			// Otherwise, just send the question
+			return c.Send(fmt.Sprintf("📋 %s", firstQuestion.Text))
 		}
 
+		// If no questions, finalize
 		delete(sessions, userID)
 		return c.Send("🎉 Thank you! Your details have been successfully saved.")
 
 	case 7:
+		// Capture the user's response
 		question := session.Questions[session.CurrentQuestion]
 		session.Responses = append(session.Responses, models.Response{
 			CustomerID: session.Customer.ID,
@@ -154,19 +197,39 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 			Answer:     c.Text(),
 		})
 
+		// If there are more questions, move to the next one
 		if session.CurrentQuestion+1 < len(session.Questions) {
 			session.CurrentQuestion++
-			return c.Send(session.Questions[session.CurrentQuestion].Text)
+			nextQuestion := session.Questions[session.CurrentQuestion]
+
+			// Parse and show options if applicable
+			options, err := parseOptions(nextQuestion.Options)
+			if err != nil {
+				log.Println("❌ Error parsing options:", err)
+				return c.Send("❌ Error retrieving question options. Please try again later.")
+			}
+
+			if len(options) > 0 && nextQuestion.Type == "multiple_choice" {
+				btns := createOptionButtons(options)
+				return c.Send(nextQuestion.Text, &tele.ReplyMarkup{ReplyKeyboard: btns})
+			}
+
+			return c.Send(nextQuestion.Text)
 		}
 
+		// Save responses once done
 		if err := saveResponses(db, session.Responses); err != nil {
 			log.Println("❌ Error saving responses:", err)
 			return c.Send("❌ An error occurred while saving your responses.")
 		}
 
 		delete(sessions, userID)
-		return c.Send("🎉 Thank you! Your details and responses have been successfully saved.")
+
+		// Remove the keyboard after the final question
+		clearKeyboard := &tele.ReplyMarkup{RemoveKeyboard: true}
+		return c.Send("🎉 Thank you! Your details and responses have been successfully saved.", clearKeyboard)
 	}
+
 	return nil
 }
 
