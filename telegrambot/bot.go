@@ -185,8 +185,8 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		}
 
 		// If no questions, finalize
-		delete(sessions, userID)
-		return c.Send("🎉 Thank you! Your details have been successfully saved.")
+		session.Step = 8
+		return c.Send("🎟 Please enter your coupon code to complete the registration.")
 
 	case 7:
 		// Capture the user's response
@@ -217,17 +217,46 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 			return c.Send(nextQuestion.Text)
 		}
 
-		// Save responses once done
+		// Save responses to DB
 		if err := saveResponses(db, session.Responses); err != nil {
 			log.Println("❌ Error saving responses:", err)
 			return c.Send("❌ An error occurred while saving your responses.")
 		}
 
-		delete(sessions, userID)
-
-		// Remove the keyboard after the final question
+		// Move to coupon validation step
+		session.Step = 8
 		clearKeyboard := &tele.ReplyMarkup{RemoveKeyboard: true}
-		return c.Send("🎉 Thank you! Your details and responses have been successfully saved.", clearKeyboard)
+		return c.Send("🎟 Please enter your coupon code to complete the registration.", clearKeyboard)
+
+	case 8: // Step 9: Validate coupon code
+		couponCode := c.Text()
+
+		var coupon models.Coupon
+		if err := db.Where("code = ? AND campaign_id = ?", couponCode, session.CampaignID).First(&coupon).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return c.Send("❌ Invalid coupon code. Please try again.")
+			}
+			log.Println("❌ Error retrieving coupon:", err)
+			return c.Send("❌ An error occurred while checking the coupon. Please try again later.")
+		}
+
+		// Check if the coupon has already been redeemed
+		if coupon.Redeemed {
+			return c.Send("❌ This coupon has already been redeemed. Please check and try again.")
+		}
+
+		// Mark coupon as redeemed
+		now := time.Now()
+		coupon.Redeemed = true
+		coupon.RedeemedAt = &now
+		if err := db.Save(&coupon).Error; err != nil {
+			log.Println("❌ Error updating coupon:", err)
+			return c.Send("❌ An error occurred while redeeming your coupon. Please try again later.")
+		}
+
+		// Final success message
+		delete(sessions, userID)
+		return c.Send("🎉 Congratulations! Your coupon has been successfully redeemed. Thank you for participating!")
 	}
 
 	return nil
