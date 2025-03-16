@@ -2,9 +2,11 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Campaign struct {
+	gorm.Model
 	ID             uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	CampaignName   string    `gorm:"not null"`
 	CouponID       string

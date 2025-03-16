@@ -1,13 +1,24 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"github.com/gofiber/fiber/v2"
 	"github.com/hidenkeys/zidibackend/api"
 	"github.com/hidenkeys/zidibackend/utils"
 	openapi_types "github.com/oapi-codegen/runtime/types"
+	"html/template"
+	"log"
 	"net/http"
+	"strconv"
 )
+
+type payment struct {
+	Name         string
+	Amount       string
+	CampaignName string
+	PaystackLink string
+}
 
 func (s Server) GenerateTokens(c *fiber.Ctx, id openapi_types.UUID) error {
 	ctx := context.Background()
@@ -163,6 +174,53 @@ func (s Server) UpdateCampaign(c *fiber.Ctx, id openapi_types.UUID) error {
 		})
 	}
 
+	pay := ""
+	if campaign.Status == "pending" {
+		response, err := s.orgService.GetOrganizationByID(context.Background(), campaign.OrganizationId)
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(api.Error{
+				ErrorCode: "500",
+				Message:   err.Error(),
+			})
+		}
+		paymentLink, err := utils.CreatePaystackPaymentLink(string(response.Email), int(campaign.Amount)*100, id.String(), campaign.OrganizationId.String())
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(api.Error{
+				ErrorCode: "500",
+				Message:   err.Error(),
+			})
+		}
+		tmp := payment{
+			Name:         response.ContactPersonName,
+			Amount:       strconv.Itoa(int(campaign.Amount) * 100),
+			CampaignName: campaign.CampaignName,
+			PaystackLink: paymentLink,
+		}
+
+		tmpl, err := template.ParseFiles("Zidi-payment-email-template.html")
+		if err != nil {
+			log.Fatalf("Error loading template: %v", err)
+		}
+
+		// Parse the template with the receipt data
+		var tpl bytes.Buffer
+		if err := tmpl.Execute(&tpl, tmp); err != nil {
+			log.Fatalf("Error executing template: %v", err)
+		}
+
+		// Convert parsed template to a string
+		createBody := tpl.String()
+
+		err = utils.SendEmail(string(response.Email), "Complete your "+campaign.CampaignName+" Campaign Payment", createBody)
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(api.Error{
+				ErrorCode: "500",
+				Message:   err.Error(),
+			})
+		}
+		pay = pay
+	}
+
 	response, err := s.campaignService.UpdateCampaign(context.Background(), id, campaign)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
@@ -170,5 +228,6 @@ func (s Server) UpdateCampaign(c *fiber.Ctx, id openapi_types.UUID) error {
 			Message:   err.Error(),
 		})
 	}
-	return c.Status(http.StatusOK).JSON(response)
+
+	return c.Status(http.StatusOK).JSON(response, pay)
 }
