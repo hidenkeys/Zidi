@@ -1,11 +1,16 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"log"
 	"math/rand"
+	"net/http"
 	"net/smtp"
+	"os"
 	"strings"
 	"time"
 )
@@ -104,4 +109,64 @@ func SendEmail(to, subject, body string) error {
 		log.Fatalf("Error sending email: %v", err)
 	}
 	return nil
+}
+
+// PaystackResponse holds the response from Paystack API
+type PaystackResponse struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		AuthorizationURL string `json:"authorization_url"`
+		AccessCode       string `json:"access_code"`
+		Reference        string `json:"reference"`
+	} `json:"data"`
+}
+
+// CreatePaystackPaymentLink initializes a payment with metadata
+func CreatePaystackPaymentLink(email string, amount int, campaignID, organizationID string) (string, error) {
+	paystackURL := "https://api.paystack.co/transaction/initialize"
+	apiKey := os.Getenv("PAYSTACK_SK") // Store in .env
+
+	// Convert amount to kobo (Paystack requires amount in kobo)
+	amountKobo := amount * 100
+
+	// Create the request body
+	requestBody, err := json.Marshal(map[string]interface{}{
+		"email":  email,
+		"amount": amountKobo,
+		"metadata": map[string]interface{}{
+			"campaign_id":     campaignID,
+			"organization_id": organizationID,
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	// Make the HTTP request
+	req, err := http.NewRequest("POST", paystackURL, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Parse the response
+	var paystackResp PaystackResponse
+	if err := json.NewDecoder(resp.Body).Decode(&paystackResp); err != nil {
+		return "", err
+	}
+
+	if !paystackResp.Status {
+		return "", fmt.Errorf("failed to initialize payment: %s", paystackResp.Message)
+	}
+
+	return paystackResp.Data.AuthorizationURL, nil
 }

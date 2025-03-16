@@ -15,6 +15,7 @@ type Campaign struct {
 	WelcomeMessage string    `gorm:"type:text"`
 	QuestionNumber int
 	Amount         float64
+	Price          float64
 	Status         string
 
 	// Relations

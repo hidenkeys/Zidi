@@ -52,6 +52,7 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, req api.Campaign) 
 		WelcomeMessage: req.WelcomeMessage,
 		QuestionNumber: req.QuestionNumber,
 		Amount:         float64(req.Amount),
+		Price:          float64(req.Price),
 		Status:         req.Status,
 	}
 
@@ -130,6 +131,7 @@ func (s *CampaignService) UpdateCampaign(ctx context.Context, id uuid.UUID, req 
 		WelcomeMessage: req.WelcomeMessage,
 		QuestionNumber: req.QuestionNumber,
 		Amount:         float64(req.Amount),
+		Price:          float64(req.Price),
 		Status:         req.Status,
 	}
 
@@ -158,6 +160,7 @@ func mapToAPICampaign(campaign *models.Campaign) *api.Campaign {
 		WelcomeMessage: campaign.WelcomeMessage,
 		QuestionNumber: campaign.QuestionNumber,
 		Amount:         float32(campaign.Amount),
+		Price:          float32(campaign.Price),
 		Status:         campaign.Status,
 	}
 }

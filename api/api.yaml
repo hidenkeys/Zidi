@@ -1041,6 +1041,7 @@ components:
         - welcomeMessage
         - questionNumber
         - amount
+        - price
         - status
         - organizationId
       properties:
@@ -1070,6 +1071,10 @@ components:
           type: integer
           example: 5
         amount:
+          type: number
+          format: float
+          example: 100.50
+        price:
           type: number
           format: float
           example: 100.50
