@@ -11,8 +11,8 @@ type Campaign struct {
 	CharacterType  string
 	CouponLength   int
 	CouponNumber   int
-	OrganizationID uuid.UUID
-	WelcomeMessage string `gorm:"type:text"`
+	OrganizationID uuid.UUID `gorm:"constraint:OnDelete:CASCADE;"`
+	WelcomeMessage string    `gorm:"type:text"`
 	QuestionNumber int
 	Amount         float64
 	Status         string

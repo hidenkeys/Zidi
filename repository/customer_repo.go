@@ -10,6 +10,6 @@ type CustomerRepository interface {
 	UpdateByID(id uuid.UUID, customer *models.Customer) (*models.Customer, error)
 	DeleteByID(id uuid.UUID) error
 	GetByID(id uuid.UUID) (*models.Customer, error)
-	GetAll() ([]models.Customer, error)
-	GetAllByOrganization(orgID uuid.UUID) ([]models.Customer, error)
+	GetAll(limit, offset int) ([]models.Customer, int64, error)
+	GetAllByOrganization(orgID uuid.UUID, limit, offset int) ([]models.Customer, int64, error)
 }

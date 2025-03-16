@@ -43,21 +43,36 @@ func (r *CustomerPG) GetByID(id uuid.UUID) (*models.Customer, error) {
 	return &customer, nil
 }
 
-func (r *CustomerPG) GetAll() ([]models.Customer, error) {
+func (r *CustomerPG) GetAll(limit, offset int) ([]models.Customer, int64, error) {
 	var customers []models.Customer
-	if err := r.db.Find(&customers).Error; err != nil {
-		return nil, err
+	var total int64
+
+	// Count total customers
+	if err := r.db.Model(&models.Customer{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
-	if customers == nil {
-		customers = []models.Customer{}
+
+	// Apply limit and offset for pagination
+	if err := r.db.Limit(limit).Offset(offset).Find(&customers).Error; err != nil {
+		return nil, 0, err
 	}
-	return customers, nil
+
+	return customers, total, nil
 }
 
-func (r *CustomerPG) GetAllByOrganization(orgID uuid.UUID) ([]models.Customer, error) {
+func (r *CustomerPG) GetAllByOrganization(orgID uuid.UUID, limit, offset int) ([]models.Customer, int64, error) {
 	var customers []models.Customer
-	if err := r.db.Where("organization_id = ?", orgID).Find(&customers).Error; err != nil {
-		return nil, err
+	var total int64
+
+	// Count total customers for the organization
+	if err := r.db.Model(&models.Customer{}).Where("organization_id = ?", orgID).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
-	return customers, nil
+
+	// Apply limit and offset for pagination
+	if err := r.db.Where("organization_id = ?", orgID).Limit(limit).Offset(offset).Find(&customers).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return customers, total, nil
 }

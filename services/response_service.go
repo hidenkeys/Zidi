@@ -33,8 +33,8 @@ func (s *ResponseService) CreateResponse(ctx context.Context, req api.Response) 
 	return mapToAPIResponse(response), nil
 }
 
-func (s *ResponseService) GetResponsesByQuestion(ctx context.Context, questionID uuid.UUID) ([]api.Response, error) {
-	responses, err := s.responseRepo.GetResponsesByQuestion(questionID)
+func (s *ResponseService) GetResponsesByQuestion(ctx context.Context, questionID uuid.UUID, limit, offset int) ([]api.Response, error) {
+	responses, _, err := s.responseRepo.GetResponsesByQuestion(questionID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

@@ -41,8 +41,8 @@ func (s *CustomerService) CreateCustomer(ctx context.Context, req api.Customer) 
 	return mapToAPICustomer(customer), nil
 }
 
-func (s *CustomerService) GetAllCustomers(ctx context.Context) ([]api.Customer, error) {
-	customers, err := s.customerRepo.GetAll()
+func (s *CustomerService) GetAllCustomers(ctx context.Context, limit, offset int) ([]api.Customer, error) {
+	customers, _, err := s.customerRepo.GetAll(limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +64,8 @@ func (s *CustomerService) GetCustomerByID(ctx context.Context, id uuid.UUID) (*a
 	return mapToAPICustomer(customer), nil
 }
 
-func (s *CustomerService) GetCustomersByOrganization(ctx context.Context, orgID uuid.UUID) ([]api.Customer, error) {
-	customers, err := s.customerRepo.GetAllByOrganization(orgID)
+func (s *CustomerService) GetCustomersByOrganization(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]api.Customer, error) {
+	customers, _, err := s.customerRepo.GetAllByOrganization(orgID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

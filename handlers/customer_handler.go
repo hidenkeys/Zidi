@@ -8,8 +8,8 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-func (s Server) GetAllCustomers(c *fiber.Ctx) error {
-	response, err := s.customerService.GetAllCustomers(context.Background())
+func (s Server) GetAllCustomers(c *fiber.Ctx, params api.GetAllCustomersParams) error {
+	response, err := s.customerService.GetAllCustomers(context.Background(), *params.Limit, *params.Offset)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
@@ -43,15 +43,32 @@ func (s Server) CreateCustomer(c *fiber.Ctx) error {
 }
 
 func (s Server) GetCustomersByOrganization(c *fiber.Ctx, params api.GetCustomersByOrganizationParams) error {
-	orgID := params.OrganizationId
-	if orgID == uuid.Nil {
-		return c.Status(fiber.StatusBadRequest).JSON(api.Error{
-			ErrorCode: "400",
-			Message:   "Invalid organization ID",
-		})
-	}
+	//userClaims, ok := c.Locals("user").(middleware.UserClaims)
+	//if !ok {
+	//	return c.Status(http.StatusUnauthorized).JSON(api.Error{
+	//		ErrorCode: "401",
+	//		Message:   "Unauthorized - Invalid token",
+	//	})
+	//}
+	//
+	//organizationUUID, err := uuid.Parse(userClaims.OrganizationID)
+	//if err != nil {
+	//	return c.Status(http.StatusBadRequest).JSON(api.Error{
+	//		ErrorCode: "400",
+	//		Message:   "Invalid organization ID format",
+	//	})
+	//}
 
-	customers, err := s.customerService.GetCustomersByOrganization(context.Background(), orgID)
+	limit := 10
+	offset := 0
+
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+	customers, err := s.customerService.GetCustomersByOrganization(context.Background(), params.OrganizationId, limit, offset)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",

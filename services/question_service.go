@@ -20,34 +20,47 @@ func NewQuestionService(questionRepo repository.QuestionRepository) *QuestionSer
 	return &QuestionService{questionRepo: questionRepo}
 }
 
-func (s *QuestionService) CreateQuestion(ctx context.Context, req api.Question) (*api.Question, error) {
-	var optionsJSON datatypes.JSON
-	if req.Options != nil {
-		jsonData, err := json.Marshal(req.Options)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal options: %w", err)
+func (s *QuestionService) CreateQuestions(ctx context.Context, reqs []api.Question) ([]api.Question, error) {
+	var createdQuestions []api.Question
+	var newQuestions []*models.Question
+
+	for _, req := range reqs {
+		var optionsJSON datatypes.JSON
+		if req.Options != nil {
+			jsonData, err := json.Marshal(req.Options)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal options: %w", err)
+			}
+			optionsJSON = datatypes.JSON(jsonData)
 		}
-		optionsJSON = datatypes.JSON(jsonData)
-	}
-	newQuestion := &models.Question{
-		ID:         req.Id,
-		CampaignID: req.CampaignId,
-		Text:       req.Text,
-		Type:       string(req.Type),
-		Options:    optionsJSON,
+
+		newQuestion := &models.Question{
+			ID:         req.Id,
+			CampaignID: req.CampaignId,
+			Text:       req.Text,
+			Type:       string(req.Type),
+			Options:    optionsJSON,
+		}
+
+		newQuestions = append(newQuestions, newQuestion)
 	}
 
-	question, err := s.questionRepo.CreateQuestion(newQuestion)
+	// Bulk insert questions into the database
+	createdQuestionsModel, err := s.questionRepo.CreateQuestions(newQuestions)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("this is my question", question)
-	return mapToAPIQuestion(question), nil
+	// Convert models to API responses
+	for _, question := range createdQuestionsModel {
+		createdQuestions = append(createdQuestions, *mapToAPIQuestion(question))
+	}
+
+	return createdQuestions, nil
 }
 
-func (s *QuestionService) GetQuestionsByCampaign(ctx context.Context, campaignID uuid.UUID) ([]api.Question, error) {
-	questions, err := s.questionRepo.GetQuestionsByCampaign(campaignID)
+func (s *QuestionService) GetQuestionsByCampaign(ctx context.Context, campaignID uuid.UUID, limit, offset int) ([]api.Question, error) {
+	questions, _, err := s.questionRepo.GetQuestionsByCampaign(campaignID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

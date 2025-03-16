@@ -54,8 +54,17 @@ func (s Server) GenerateTokens(c *fiber.Ctx, id openapi_types.UUID) error {
 	})
 }
 
-func (s Server) GetAllCampaigns(c *fiber.Ctx) error {
-	response, err := s.campaignService.GetAllCampaigns(context.Background())
+func (s Server) GetAllCampaigns(c *fiber.Ctx, params api.GetAllCampaignsParams) error {
+	limit := 10
+	offset := 0
+
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+	response, err := s.campaignService.GetAllCampaigns(context.Background(), limit, offset)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
@@ -85,7 +94,24 @@ func (s Server) CreateCampaign(c *fiber.Ctx) error {
 }
 
 func (s Server) GetCampaignsByOrganization(c *fiber.Ctx, params api.GetCampaignsByOrganizationParams) error {
-	response, err := s.campaignService.GetCampaignsByOrganization(context.Background(), params.OrganizationId)
+	//userClaims, ok := c.Locals("user").(middleware.UserClaims)
+	//if !ok {
+	//	return c.Status(http.StatusUnauthorized).JSON(api.Error{
+	//		ErrorCode: "401",
+	//		Message:   "Unauthorized - Invalid token",
+	//	})
+	//}
+	limit := 10
+	offset := 0
+
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+
+	response, err := s.campaignService.GetCampaignsByOrganization(context.Background(), params.OrganizationId, limit, offset)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",

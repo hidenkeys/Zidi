@@ -101,8 +101,8 @@ func (us *UserService) GetUserByID(ctx context.Context, id uuid.UUID) (*api.User
 	return finalUser, nil
 }
 
-func (us *UserService) GetAllUsers(ctx context.Context) ([]api.User, error) {
-	users, err := us.userRepo.GetAll()
+func (us *UserService) GetAllUsers(ctx context.Context, limit, offset int) ([]api.User, error) {
+	users, _, err := us.userRepo.GetAll(limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -140,8 +140,8 @@ func (us *UserService) GetUserByEmail(ctx context.Context, email string) (*api.U
 	return finalUser, nil
 }
 
-func (us *UserService) GetUserByOrganizationID(ctx context.Context, orgId uuid.UUID) ([]api.User, error) {
-	users, err := us.userRepo.GetAllByOrganizationID(orgId)
+func (us *UserService) GetUserByOrganizationID(ctx context.Context, orgId uuid.UUID, limit, offset int) ([]api.User, error) {
+	users, _, err := us.userRepo.GetAllByOrganizationID(orgId, limit, offset)
 	if err != nil {
 		return nil, err
 	}

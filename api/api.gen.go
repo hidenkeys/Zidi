@@ -19,6 +19,10 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+const (
+	BearerAuthScopes = "BearerAuth.Scopes"
+)
+
 // Defines values for QuestionType.
 const (
 	MultipleChoice QuestionType = "multiple_choice"
@@ -143,19 +147,102 @@ type InternalServerError = Error
 // NotFound defines model for NotFound.
 type NotFound = Error
 
+// GetAllCampaignsParams defines parameters for GetAllCampaigns.
+type GetAllCampaignsParams struct {
+	// Limit Number of campaigns to return (pagination)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of campaigns to skip before starting to return results
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // GetCampaignsByOrganizationParams defines parameters for GetCampaignsByOrganization.
 type GetCampaignsByOrganizationParams struct {
+	// Limit Number of campaigns to return (pagination)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of campaigns to skip before starting to return results
+	Offset         *int               `form:"offset,omitempty" json:"offset,omitempty"`
 	OrganizationId openapi_types.UUID `form:"organizationId" json:"organizationId"`
+}
+
+// GetCampaignsCampaignIdQuestionsParams defines parameters for GetCampaignsCampaignIdQuestions.
+type GetCampaignsCampaignIdQuestionsParams struct {
+	// Limit Number of questions to return (pagination)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of questions to skip before starting to return results
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// PostCampaignsCampaignIdQuestionsJSONBody defines parameters for PostCampaignsCampaignIdQuestions.
+type PostCampaignsCampaignIdQuestionsJSONBody = []Question
+
+// GetAllCustomersParams defines parameters for GetAllCustomers.
+type GetAllCustomersParams struct {
+	// Limit Number of campaigns to return (pagination)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of campaigns to skip before starting to return results
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // GetCustomersByOrganizationParams defines parameters for GetCustomersByOrganization.
 type GetCustomersByOrganizationParams struct {
 	OrganizationId openapi_types.UUID `form:"organizationId" json:"organizationId"`
+
+	// Limit Number of customers to return (pagination)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of customers to skip before starting to return results
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// GetOrganizationsParams defines parameters for GetOrganizations.
+type GetOrganizationsParams struct {
+	// Limit Number of organizations to return (pagination)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of organizations to skip before starting to return results
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // GetOrganizationByNameParams defines parameters for GetOrganizationByName.
 type GetOrganizationByNameParams struct {
 	Name string `form:"name" json:"name"`
+
+	// Limit Number of organizations to return (pagination)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of organizations to skip before starting to return results
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// GetUsersByOrganizationParams defines parameters for GetUsersByOrganization.
+type GetUsersByOrganizationParams struct {
+	// Limit Number of users to return (pagination)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of users to skip before starting to return results
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// GetQuestionsQuestionIdResponsesParams defines parameters for GetQuestionsQuestionIdResponses.
+type GetQuestionsQuestionIdResponsesParams struct {
+	// Limit Number of responses to return (pagination)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of responses to skip before starting to return results
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// GetUsersParams defines parameters for GetUsers.
+type GetUsersParams struct {
+	// Limit Number of users to return (pagination)
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of users to skip before starting to return results
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // GetUserByEmailParams defines parameters for GetUserByEmail.
@@ -179,7 +266,7 @@ type LoginUserJSONRequestBody = LoginRequest
 type CreateCampaignJSONRequestBody = Campaign
 
 // PostCampaignsCampaignIdQuestionsJSONRequestBody defines body for PostCampaignsCampaignIdQuestions for application/json ContentType.
-type PostCampaignsCampaignIdQuestionsJSONRequestBody = Question
+type PostCampaignsCampaignIdQuestionsJSONRequestBody = PostCampaignsCampaignIdQuestionsJSONBody
 
 // UpdateCampaignJSONRequestBody defines body for UpdateCampaign for application/json ContentType.
 type UpdateCampaignJSONRequestBody = Campaign
@@ -215,7 +302,7 @@ type ServerInterface interface {
 	LoginUser(c *fiber.Ctx) error
 	// Get all campaigns
 	// (GET /campaigns)
-	GetAllCampaigns(c *fiber.Ctx) error
+	GetAllCampaigns(c *fiber.Ctx, params GetAllCampaignsParams) error
 	// Create a new campaign
 	// (POST /campaigns)
 	CreateCampaign(c *fiber.Ctx) error
@@ -224,7 +311,7 @@ type ServerInterface interface {
 	GetCampaignsByOrganization(c *fiber.Ctx, params GetCampaignsByOrganizationParams) error
 	// Get all questions for a campaign
 	// (GET /campaigns/{campaignId}/questions)
-	GetCampaignsCampaignIdQuestions(c *fiber.Ctx, campaignId openapi_types.UUID) error
+	GetCampaignsCampaignIdQuestions(c *fiber.Ctx, campaignId openapi_types.UUID, params GetCampaignsCampaignIdQuestionsParams) error
 	// Create a new question for a campaign
 	// (POST /campaigns/{campaignId}/questions)
 	PostCampaignsCampaignIdQuestions(c *fiber.Ctx, campaignId openapi_types.UUID) error
@@ -245,7 +332,7 @@ type ServerInterface interface {
 	GenerateTokens(c *fiber.Ctx, id openapi_types.UUID) error
 	// Get all customers
 	// (GET /customers)
-	GetAllCustomers(c *fiber.Ctx) error
+	GetAllCustomers(c *fiber.Ctx, params GetAllCustomersParams) error
 	// Create a new customer
 	// (POST /customers)
 	CreateCustomer(c *fiber.Ctx) error
@@ -263,7 +350,7 @@ type ServerInterface interface {
 	UpdateCustomer(c *fiber.Ctx, id openapi_types.UUID) error
 	// Get all organizations
 	// (GET /organizations)
-	GetOrganizations(c *fiber.Ctx) error
+	GetOrganizations(c *fiber.Ctx, params GetOrganizationsParams) error
 	// Create an organization
 	// (POST /organizations)
 	CreateOrganization(c *fiber.Ctx) error
@@ -281,19 +368,19 @@ type ServerInterface interface {
 	UpdateOrganization(c *fiber.Ctx, organizationId openapi_types.UUID) error
 	// Get all users in an organization
 	// (GET /organizations/{organization_id}/users)
-	GetUsersByOrganization(c *fiber.Ctx, organizationId openapi_types.UUID) error
+	GetUsersByOrganization(c *fiber.Ctx, organizationId openapi_types.UUID, params GetUsersByOrganizationParams) error
 	// Delete a question
 	// (DELETE /questions/{questionId})
 	DeleteQuestionsQuestionId(c *fiber.Ctx, questionId openapi_types.UUID) error
 	// Get all responses for a question
 	// (GET /questions/{questionId}/responses)
-	GetQuestionsQuestionIdResponses(c *fiber.Ctx, questionId openapi_types.UUID) error
+	GetQuestionsQuestionIdResponses(c *fiber.Ctx, questionId openapi_types.UUID, params GetQuestionsQuestionIdResponsesParams) error
 	// Create a response for a question
 	// (POST /questions/{questionId}/responses)
 	PostQuestionsQuestionIdResponses(c *fiber.Ctx, questionId openapi_types.UUID) error
 	// Get all users
 	// (GET /users)
-	GetUsers(c *fiber.Ctx) error
+	GetUsers(c *fiber.Ctx, params GetUsersParams) error
 	// Create a user
 	// (POST /users)
 	CreateUser(c *fiber.Ctx) error
@@ -324,17 +411,48 @@ type MiddlewareFunc fiber.Handler
 // LoginUser operation middleware
 func (siw *ServerInterfaceWrapper) LoginUser(c *fiber.Ctx) error {
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.LoginUser(c)
 }
 
 // GetAllCampaigns operation middleware
 func (siw *ServerInterfaceWrapper) GetAllCampaigns(c *fiber.Ctx) error {
 
-	return siw.Handler.GetAllCampaigns(c)
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAllCampaignsParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.GetAllCampaigns(c, params)
 }
 
 // CreateCampaign operation middleware
 func (siw *ServerInterfaceWrapper) CreateCampaign(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.CreateCampaign(c)
 }
@@ -344,6 +462,8 @@ func (siw *ServerInterfaceWrapper) GetCampaignsByOrganization(c *fiber.Ctx) erro
 
 	var err error
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetCampaignsByOrganizationParams
 
@@ -351,6 +471,20 @@ func (siw *ServerInterfaceWrapper) GetCampaignsByOrganization(c *fiber.Ctx) erro
 	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
 	}
 
 	// ------------- Required query parameter "organizationId" -------------
@@ -384,7 +518,32 @@ func (siw *ServerInterfaceWrapper) GetCampaignsCampaignIdQuestions(c *fiber.Ctx)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter campaignId: %w", err).Error())
 	}
 
-	return siw.Handler.GetCampaignsCampaignIdQuestions(c, campaignId)
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCampaignsCampaignIdQuestionsParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.GetCampaignsCampaignIdQuestions(c, campaignId, params)
 }
 
 // PostCampaignsCampaignIdQuestions operation middleware
@@ -399,6 +558,8 @@ func (siw *ServerInterfaceWrapper) PostCampaignsCampaignIdQuestions(c *fiber.Ctx
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter campaignId: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.PostCampaignsCampaignIdQuestions(c, campaignId)
 }
@@ -416,6 +577,8 @@ func (siw *ServerInterfaceWrapper) DeleteCampaign(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.DeleteCampaign(c, id)
 }
 
@@ -431,6 +594,8 @@ func (siw *ServerInterfaceWrapper) GetCampaignById(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.GetCampaignById(c, id)
 }
@@ -448,6 +613,8 @@ func (siw *ServerInterfaceWrapper) UpdateCampaign(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.UpdateCampaign(c, id)
 }
 
@@ -463,6 +630,8 @@ func (siw *ServerInterfaceWrapper) GetCouponsByCampaign(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.GetCouponsByCampaign(c, id)
 }
@@ -480,17 +649,48 @@ func (siw *ServerInterfaceWrapper) GenerateTokens(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GenerateTokens(c, id)
 }
 
 // GetAllCustomers operation middleware
 func (siw *ServerInterfaceWrapper) GetAllCustomers(c *fiber.Ctx) error {
 
-	return siw.Handler.GetAllCustomers(c)
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAllCustomersParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.GetAllCustomers(c, params)
 }
 
 // CreateCustomer operation middleware
 func (siw *ServerInterfaceWrapper) CreateCustomer(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.CreateCustomer(c)
 }
@@ -499,6 +699,8 @@ func (siw *ServerInterfaceWrapper) CreateCustomer(c *fiber.Ctx) error {
 func (siw *ServerInterfaceWrapper) GetCustomersByOrganization(c *fiber.Ctx) error {
 
 	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetCustomersByOrganizationParams
@@ -524,6 +726,20 @@ func (siw *ServerInterfaceWrapper) GetCustomersByOrganization(c *fiber.Ctx) erro
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organizationId: %w", err).Error())
 	}
 
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
 	return siw.Handler.GetCustomersByOrganization(c, params)
 }
 
@@ -539,6 +755,8 @@ func (siw *ServerInterfaceWrapper) DeleteCustomer(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.DeleteCustomer(c, id)
 }
@@ -556,6 +774,8 @@ func (siw *ServerInterfaceWrapper) GetCustomerById(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetCustomerById(c, id)
 }
 
@@ -572,17 +792,48 @@ func (siw *ServerInterfaceWrapper) UpdateCustomer(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.UpdateCustomer(c, id)
 }
 
 // GetOrganizations operation middleware
 func (siw *ServerInterfaceWrapper) GetOrganizations(c *fiber.Ctx) error {
 
-	return siw.Handler.GetOrganizations(c)
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetOrganizationsParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.GetOrganizations(c, params)
 }
 
 // CreateOrganization operation middleware
 func (siw *ServerInterfaceWrapper) CreateOrganization(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.CreateOrganization(c)
 }
@@ -591,6 +842,8 @@ func (siw *ServerInterfaceWrapper) CreateOrganization(c *fiber.Ctx) error {
 func (siw *ServerInterfaceWrapper) GetOrganizationByName(c *fiber.Ctx) error {
 
 	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetOrganizationByNameParams
@@ -616,6 +869,20 @@ func (siw *ServerInterfaceWrapper) GetOrganizationByName(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter name: %w", err).Error())
 	}
 
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
 	return siw.Handler.GetOrganizationByName(c, params)
 }
 
@@ -631,6 +898,8 @@ func (siw *ServerInterfaceWrapper) DeleteOrganization(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.DeleteOrganization(c, organizationId)
 }
@@ -648,6 +917,8 @@ func (siw *ServerInterfaceWrapper) GetOrganizationById(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.GetOrganizationById(c, organizationId)
 }
 
@@ -663,6 +934,8 @@ func (siw *ServerInterfaceWrapper) UpdateOrganization(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.UpdateOrganization(c, organizationId)
 }
@@ -680,7 +953,32 @@ func (siw *ServerInterfaceWrapper) GetUsersByOrganization(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
 	}
 
-	return siw.Handler.GetUsersByOrganization(c, organizationId)
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUsersByOrganizationParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.GetUsersByOrganization(c, organizationId, params)
 }
 
 // DeleteQuestionsQuestionId operation middleware
@@ -695,6 +993,8 @@ func (siw *ServerInterfaceWrapper) DeleteQuestionsQuestionId(c *fiber.Ctx) error
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter questionId: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.DeleteQuestionsQuestionId(c, questionId)
 }
@@ -712,7 +1012,32 @@ func (siw *ServerInterfaceWrapper) GetQuestionsQuestionIdResponses(c *fiber.Ctx)
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter questionId: %w", err).Error())
 	}
 
-	return siw.Handler.GetQuestionsQuestionIdResponses(c, questionId)
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetQuestionsQuestionIdResponsesParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.GetQuestionsQuestionIdResponses(c, questionId, params)
 }
 
 // PostQuestionsQuestionIdResponses operation middleware
@@ -728,17 +1053,48 @@ func (siw *ServerInterfaceWrapper) PostQuestionsQuestionIdResponses(c *fiber.Ctx
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter questionId: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.PostQuestionsQuestionIdResponses(c, questionId)
 }
 
 // GetUsers operation middleware
 func (siw *ServerInterfaceWrapper) GetUsers(c *fiber.Ctx) error {
 
-	return siw.Handler.GetUsers(c)
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUsersParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.GetUsers(c, params)
 }
 
 // CreateUser operation middleware
 func (siw *ServerInterfaceWrapper) CreateUser(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.CreateUser(c)
 }
@@ -747,6 +1103,8 @@ func (siw *ServerInterfaceWrapper) CreateUser(c *fiber.Ctx) error {
 func (siw *ServerInterfaceWrapper) GetUserByEmail(c *fiber.Ctx) error {
 
 	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetUserByEmailParams
@@ -788,6 +1146,8 @@ func (siw *ServerInterfaceWrapper) DeleteUser(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter user_id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.DeleteUser(c, userId)
 }
 
@@ -803,6 +1163,8 @@ func (siw *ServerInterfaceWrapper) GetUserById(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter user_id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.GetUserById(c, userId)
 }
@@ -820,6 +1182,8 @@ func (siw *ServerInterfaceWrapper) UpdateUser(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter user_id: %w", err).Error())
 	}
 
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
 	return siw.Handler.UpdateUser(c, userId)
 }
 
@@ -835,6 +1199,8 @@ func (siw *ServerInterfaceWrapper) UpdateUserPassword(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter user_id: %w", err).Error())
 	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.UpdateUserPassword(c, userId)
 }
@@ -933,51 +1299,56 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"jV0AAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

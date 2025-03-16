@@ -9,8 +9,32 @@ import (
 	"net/http"
 )
 
-func (s Server) GetUsersByOrganization(c *fiber.Ctx, organizationId openapi_types.UUID) error {
-	response, err := s.usrService.GetUserByOrganizationID(context.Background(), organizationId)
+func (s Server) GetUsersByOrganization(c *fiber.Ctx, organizationId openapi_types.UUID, params api.GetUsersByOrganizationParams) error {
+	//userClaims, ok := c.Locals("user").(middleware.UserClaims)
+	//if !ok {
+	//	return c.Status(http.StatusUnauthorized).JSON(api.Error{
+	//		ErrorCode: "401",
+	//		Message:   "Unauthorized - Invalid token",
+	//	})
+	//}
+	//
+	//organizationUUID, err := uuid.Parse(userClaims.OrganizationID)
+	//if err != nil {
+	//	return c.Status(http.StatusBadRequest).JSON(api.Error{
+	//		ErrorCode: "400",
+	//		Message:   "Invalid organization ID format",
+	//	})
+	//}
+	limit := 10
+	offset := 0
+
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+	response, err := s.usrService.GetUserByOrganizationID(context.Background(), organizationId, limit, offset)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
@@ -31,8 +55,17 @@ func (s Server) GetUserByEmail(c *fiber.Ctx, params api.GetUserByEmailParams) er
 	return c.Status(http.StatusOK).JSON(response)
 }
 
-func (s Server) GetUsers(c *fiber.Ctx) error {
-	response, err := s.usrService.GetAllUsers(context.Background())
+func (s Server) GetUsers(c *fiber.Ctx, params api.GetUsersParams) error {
+	limit := 10
+	offset := 0
+
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+	response, err := s.usrService.GetAllUsers(context.Background(), limit, offset)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",

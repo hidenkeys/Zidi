@@ -14,6 +14,6 @@ type Customer struct {
 	Network        string
 	Amount         float64
 	Status         string
-	OrganizationID uuid.UUID
-	CampaignID     uuid.UUID
+	OrganizationID uuid.UUID `gorm:"constraint:OnDelete:CASCADE;"`
+	CampaignID     uuid.UUID `gorm:"constraint:OnDelete:CASCADE;"`
 }

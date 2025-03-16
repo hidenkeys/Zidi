@@ -31,7 +31,7 @@ func (s Server) LoginUser(c *fiber.Ctx) error {
 			Message:   err.Error(),
 		})
 	}
-	
+
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		return c.Status(http.StatusUnauthorized).JSON(api.Error{
 			ErrorCode: "401",
@@ -39,7 +39,7 @@ func (s Server) LoginUser(c *fiber.Ctx) error {
 		})
 	}
 
-	token, err := utils.GenerateJWT(user.Id, user.Role, user.OrganizationId)
+	token, err := utils.GenerateJWTToken(user.Id.String(), user.OrganizationId.String(), user.Role)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",

@@ -9,7 +9,7 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-func (s Server) GetQuestionsQuestionIdResponses(c *fiber.Ctx, questionId openapi_types.UUID) error {
+func (s Server) GetQuestionsQuestionIdResponses(c *fiber.Ctx, questionId openapi_types.UUID, params api.GetQuestionsQuestionIdResponsesParams) error {
 	if questionId == uuid.Nil {
 		return c.Status(fiber.StatusBadRequest).JSON(api.Error{
 			ErrorCode: "400",
@@ -17,7 +17,17 @@ func (s Server) GetQuestionsQuestionIdResponses(c *fiber.Ctx, questionId openapi
 		})
 	}
 
-	responses, err := s.responseService.GetResponsesByQuestion(context.Background(), questionId)
+	limit := 10
+	offset := 0
+
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+
+	responses, err := s.responseService.GetResponsesByQuestion(context.Background(), questionId, limit, offset)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",

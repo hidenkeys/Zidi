@@ -63,8 +63,8 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, req api.Campaign) 
 	return mapToAPICampaign(campaign), nil
 }
 
-func (s *CampaignService) GetAllCampaigns(ctx context.Context) ([]api.Campaign, error) {
-	campaigns, err := s.campaignRepo.GetAll()
+func (s *CampaignService) GetAllCampaigns(ctx context.Context, limit, offset int) ([]api.Campaign, error) {
+	campaigns, _, err := s.campaignRepo.GetAll(limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -96,8 +96,8 @@ func (s *CampaignService) GetAllCoupons(ctx context.Context, campaignId uuid.UUI
 	return finalCoupons, nil
 }
 
-func (s *CampaignService) GetCampaignsByOrganization(ctx context.Context, orgID uuid.UUID) ([]api.Campaign, error) {
-	campaigns, err := s.campaignRepo.GetAllByOrganization(orgID)
+func (s *CampaignService) GetCampaignsByOrganization(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]api.Campaign, error) {
+	campaigns, _, err := s.campaignRepo.GetAllByOrganization(orgID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

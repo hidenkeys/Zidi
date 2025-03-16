@@ -100,8 +100,8 @@ func (org *OrganizationService) GetOrganizationByID(ctx context.Context, id uuid
 	return finalOrg, nil
 }
 
-func (org *OrganizationService) GetAllOrganizations(ctx context.Context) ([]api.Organization, error) {
-	organizations, err := org.orgRepo.GetAllById()
+func (org *OrganizationService) GetAllOrganizations(ctx context.Context, limit, offset int) ([]api.Organization, error) {
+	organizations, _, err := org.orgRepo.GetAll(limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -121,8 +121,8 @@ func (org *OrganizationService) GetAllOrganizations(ctx context.Context) ([]api.
 	return finalOrgs, nil
 }
 
-func (org *OrganizationService) GetOrganizationByName(ctx context.Context, name string) ([]api.Organization, error) {
-	organizations, err := org.orgRepo.GetByName(name)
+func (org *OrganizationService) GetOrganizationByName(ctx context.Context, name string, limit, offset int) ([]api.Organization, error) {
+	organizations, _, err := org.orgRepo.GetByName(name, limit, offset)
 	if err != nil {
 		return nil, err
 	}

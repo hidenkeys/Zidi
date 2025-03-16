@@ -14,10 +14,22 @@ func NewResponseRepoPG(db *gorm.DB) ResponseRepository {
 	return &responsePG{db: db}
 }
 
-func (r *responsePG) GetResponsesByQuestion(questionID uuid.UUID) ([]models.Response, error) {
+func (r *responsePG) GetResponsesByQuestion(questionID uuid.UUID, limit, offset int) ([]models.Response, int64, error) {
 	var responses []models.Response
-	err := r.db.Where("question_id = ?", questionID).Find(&responses).Error
-	return responses, err
+	var total int64
+
+	// Count total responses for the question
+	if err := r.db.Model(&models.Response{}).Where("question_id = ?", questionID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply limit and offset for pagination
+	err := r.db.Where("question_id = ?", questionID).Limit(limit).Offset(offset).Find(&responses).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return responses, total, nil
 }
 
 func (r *responsePG) CreateResponse(response *models.Response) (*models.Response, error) {

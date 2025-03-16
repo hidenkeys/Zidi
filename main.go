@@ -6,6 +6,7 @@ import (
 	"github.com/hidenkeys/zidibackend/api"
 	"github.com/hidenkeys/zidibackend/config"
 	"github.com/hidenkeys/zidibackend/handlers"
+	"github.com/hidenkeys/zidibackend/middleware"
 	"github.com/hidenkeys/zidibackend/repository"
 	"github.com/hidenkeys/zidibackend/services"
 	"github.com/hidenkeys/zidibackend/telegrambot"
@@ -15,6 +16,7 @@ import (
 
 func main() {
 	_ = godotenv.Load()
+	var jwtSecret = []byte("your-secret-key")
 	config.ConnectDatabase()
 	config.MigrateDatabase()
 
@@ -47,11 +49,24 @@ func main() {
 		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",                                                                                                                                                                                     // Allow specific HTTP methods
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",                                                                                                                                                                         // Allow custom headers
 	}))
+	userAuth := middleware.AuthMiddleware(string(jwtSecret), "user", "admin", "zidi")
+	app.Post("/api/v1/auth/login", server.LoginUser)
+	app.Use(userAuth)
 
+	//adminAuth := middleware.AuthMiddleware(string(jwtSecret), "admin")
+	//zidiAuth := middleware.AuthMiddleware(string(jwtSecret), "zidi")
+	//zidiAndAdminAuth := middleware.AuthMiddleware(string(jwtSecret), "zidi","admin")
+	//adminAndUserAuth := middleware.AuthMiddleware(string(jwtSecret), )
 	go telegrambot.StartBot(db)
 
-	api.RegisterHandlers(app, server)
+	api.RegisterHandlersWithOptions(app, server, api.FiberServerOptions{
+		BaseURL:     "/api/v1",
+		Middlewares: []api.MiddlewareFunc{
+			//userAuth,
+		},
+	})
 
+	server.SeedDefaultOrganization()
 	// And we serve HTTP until the world ends.
 	log.Fatal(app.Listen("0.0.0.0:8080"))
 

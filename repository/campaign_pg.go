@@ -30,22 +30,34 @@ func (r *CampaignRepoPG) CreateCoupon(coupon *models.Coupon) (*models.Coupon, er
 	return coupon, nil
 }
 
-func (r *CampaignRepoPG) GetAll() ([]models.Campaign, error) {
+func (r *CampaignRepoPG) GetAll(limit, offset int) ([]models.Campaign, int64, error) {
 	var campaigns []models.Campaign
-	err := r.db.Find(&campaigns)
+	var total int64
+
+	// Count total campaigns
+	r.db.Model(&models.Campaign{}).Count(&total)
+
+	// Retrieve paginated results
+	err := r.db.Limit(limit).Offset(offset).Find(&campaigns)
 	if err.Error != nil {
-		return nil, err.Error
+		return nil, 0, err.Error
 	}
-	return campaigns, nil
+	return campaigns, total, nil
 }
 
-func (r *CampaignRepoPG) GetAllByOrganization(orgID uuid.UUID) ([]models.Campaign, error) {
+func (r *CampaignRepoPG) GetAllByOrganization(orgID uuid.UUID, limit, offset int) ([]models.Campaign, int64, error) {
 	var campaigns []models.Campaign
-	err := r.db.Where("organization_id = ?", orgID).Find(&campaigns)
+	var total int64
+
+	// Count total campaigns for the organization
+	r.db.Model(&models.Campaign{}).Where("organization_id = ?", orgID).Count(&total)
+
+	// Retrieve paginated results
+	err := r.db.Where("organization_id = ?", orgID).Limit(limit).Offset(offset).Find(&campaigns)
 	if err.Error != nil {
-		return nil, err.Error
+		return nil, 0, err.Error
 	}
-	return campaigns, nil
+	return campaigns, total, nil
 }
 
 func (r *CampaignRepoPG) GetCouponByCampaign(campaignID uuid.UUID) ([]models.Coupon, error) {
