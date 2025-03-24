@@ -40,7 +40,10 @@ func main() {
 	responseRepo := repository.NewResponseRepoPG(db)
 	responseService := services.NewResponseService(responseRepo)
 
-	server := handlers.NewServer(orgService, userService, campaignService, customerService, questionService, responseService)
+	paymentRepo := repository.NewPaymentRepoPG(db)
+	paymentService := services.NewPaymentService(paymentRepo)
+
+	server := handlers.NewServer(orgService, userService, campaignService, customerService, questionService, responseService, paymentService)
 
 	app := fiber.New()
 

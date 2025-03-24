@@ -183,18 +183,21 @@ func (s Server) UpdateCampaign(c *fiber.Ctx, id openapi_types.UUID) error {
 				Message:   err.Error(),
 			})
 		}
-		paymentLink, err := utils.CreatePaystackPaymentLink(string(response.Email), int(campaign.Amount)*100, id.String(), campaign.OrganizationId.String())
+
+		// Generate Flutterwave payment link
+		paymentLink, err := utils.CreateFlutterwavePaymentLink(string(response.Email), int(campaign.Amount)*100, id.String(), campaign.OrganizationId.String())
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(api.Error{
 				ErrorCode: "500",
 				Message:   err.Error(),
 			})
 		}
+
 		tmp := payment{
 			Name:         response.ContactPersonName,
 			Amount:       strconv.Itoa(int(campaign.Amount) * 100),
 			CampaignName: campaign.CampaignName,
-			PaystackLink: paymentLink,
+			PaystackLink: paymentLink, // Updated to use Flutterwave link
 		}
 
 		tmpl, err := template.ParseFiles("Zidi-payment-email-template.html")
@@ -202,13 +205,11 @@ func (s Server) UpdateCampaign(c *fiber.Ctx, id openapi_types.UUID) error {
 			log.Fatalf("Error loading template: %v", err)
 		}
 
-		// Parse the template with the receipt data
 		var tpl bytes.Buffer
 		if err := tmpl.Execute(&tpl, tmp); err != nil {
 			log.Fatalf("Error executing template: %v", err)
 		}
 
-		// Convert parsed template to a string
 		createBody := tpl.String()
 
 		err = utils.SendEmail(string(response.Email), "Complete your "+campaign.CampaignName+" Campaign Payment", createBody)
@@ -218,7 +219,7 @@ func (s Server) UpdateCampaign(c *fiber.Ctx, id openapi_types.UUID) error {
 				Message:   err.Error(),
 			})
 		}
-		pay = pay
+		pay = paymentLink
 	}
 
 	response, err := s.campaignService.UpdateCampaign(context.Background(), id, campaign)

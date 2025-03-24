@@ -923,7 +923,211 @@ paths:
         responses:
           '204':
             description: Question deleted successfully
+  /flutterwave/webhook:
+    post:
+      summary: Handle Flutterwave payment notifications
+      tags:
+        - Webhooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  description: Type of event (e.g., charge.completed, transfer.successful)
+                data:
+                  type: object
+                  description: Payload containing transaction details
+                  properties:
+                    id:
+                      type: integer
+                      description: Unique transaction ID
+                    status:
+                      type: string
+                      description: Transaction status (e.g., successful, failed)
+                    tx_ref:
+                      type: string
+                      description: Transaction reference
+                    amount:
+                      type: integer
+                      description: Amount involved in the transaction
+      responses:
+        '200':
+          description: Webhook received successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Webhook received"
+        '400':
+          description: Invalid request payload
+        '401':
+          description: Unauthorized request (invalid signature)
+        '500':
+          description: Internal server error
+  /payments:
+    post:
+      summary: Create a new payment
+      operationId: createPayment
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Payment"
+      responses:
+        '201':
+          description: Payment successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        '400':
+          description: Invalid request data
+        '500':
+          description: Internal server error
 
+    get:
+      summary: Get all payments
+      operationId: getAllPayments
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 10
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 0
+      responses:
+        '200':
+          description: A list of payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  payments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Payment"
+        '500':
+          description: Internal server error
+
+  /payments/{id}:
+      get:
+        summary: Get a payment by ID
+        operationId: getPaymentById
+        security:
+          - BearerAuth: [ ]
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          '200':
+            description: Payment found
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Payment"
+          '404':
+            description: Payment not found
+          '500':
+            description: Internal server error
+
+      put:
+        summary: Update a payment by ID
+        operationId: updatePaymentById
+        security:
+          - BearerAuth: [ ]
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+        responses:
+          '200':
+            description: Payment updated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Payment"
+          '400':
+            description: Invalid request data
+          '404':
+            description: Payment not found
+          '500':
+            description: Internal server error
+
+  /payments/organization/{organization_id}:
+      get:
+        summary: Get payments by organization ID
+        operationId: getPaymentsByOrganization
+        security:
+          - BearerAuth: [ ]
+        parameters:
+          - name: organization_id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+          - name: limit
+            in: query
+            required: false
+            schema:
+              type: integer
+              example: 10
+          - name: offset
+            in: query
+            required: false
+            schema:
+              type: integer
+              example: 0
+        responses:
+          '200':
+            description: List of payments for an organization
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    total:
+                      type: integer
+                    payments:
+                      type: array
+                      items:
+                        $ref: "#/components/schemas/Payment"
+          '500':
+            description: Internal server error
   /questions/{questionId}/responses:
       get:
         summary: Get all responses for a question
@@ -1117,6 +1321,44 @@ components:
         organization_id:
           type: string
           format: uuid
+    Payment:
+      type: object
+      required:
+        - id
+        - organization_id
+        - campaign_id
+        - amount
+        - transaction_ref
+        - transaction_id
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "5c2a4d94-27f8-4fbd-8f74-8dd8c7c8e49c"
+        organization_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        campaign_id:
+          type: string
+          format: uuid
+          example: "2d6f2952-9a5b-4663-91e1-67d573a3f940"
+        amount:
+          type: number
+          format: float
+          example: 100.50
+        transaction_ref:
+          type: string
+          example: "TXN123456789"
+        transaction_id:
+          type: string
+          example: "543456789654789654"
+        status:
+          type: string
+          enum: [ pending, completed, failed ]
+          example: "pending"
+
     LoginRequest:
       type: object
       required:

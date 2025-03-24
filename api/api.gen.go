@@ -23,6 +23,13 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
+// Defines values for PaymentStatus.
+const (
+	Completed PaymentStatus = "completed"
+	Failed    PaymentStatus = "failed"
+	Pending   PaymentStatus = "pending"
+)
+
 // Defines values for QuestionType.
 const (
 	MultipleChoice QuestionType = "multiple_choice"
@@ -106,6 +113,20 @@ type Organization struct {
 	Id                 openapi_types.UUID  `json:"id"`
 	Industry           string              `json:"industry"`
 }
+
+// Payment defines model for Payment.
+type Payment struct {
+	Amount         float32            `json:"amount"`
+	CampaignId     openapi_types.UUID `json:"campaign_id"`
+	Id             openapi_types.UUID `json:"id"`
+	OrganizationId openapi_types.UUID `json:"organization_id"`
+	Status         PaymentStatus      `json:"status"`
+	TransactionId  string             `json:"transaction_id"`
+	TransactionRef string             `json:"transaction_ref"`
+}
+
+// PaymentStatus defines model for Payment.Status.
+type PaymentStatus string
 
 // Question defines model for Question.
 type Question struct {
@@ -199,6 +220,27 @@ type GetCustomersByOrganizationParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// PostFlutterwaveWebhookJSONBody defines parameters for PostFlutterwaveWebhook.
+type PostFlutterwaveWebhookJSONBody struct {
+	// Data Payload containing transaction details
+	Data *struct {
+		// Amount Amount involved in the transaction
+		Amount *int `json:"amount,omitempty"`
+
+		// Id Unique transaction ID
+		Id *int `json:"id,omitempty"`
+
+		// Status Transaction status (e.g., successful, failed)
+		Status *string `json:"status,omitempty"`
+
+		// TxRef Transaction reference
+		TxRef *string `json:"tx_ref,omitempty"`
+	} `json:"data,omitempty"`
+
+	// Event Type of event (e.g., charge.completed, transfer.successful)
+	Event *string `json:"event,omitempty"`
+}
+
 // GetOrganizationsParams defines parameters for GetOrganizations.
 type GetOrganizationsParams struct {
 	// Limit Number of organizations to return (pagination)
@@ -225,6 +267,18 @@ type GetUsersByOrganizationParams struct {
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 
 	// Offset Number of users to skip before starting to return results
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// GetAllPaymentsParams defines parameters for GetAllPayments.
+type GetAllPaymentsParams struct {
+	Limit  *int `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// GetPaymentsByOrganizationParams defines parameters for GetPaymentsByOrganization.
+type GetPaymentsByOrganizationParams struct {
+	Limit  *int `form:"limit,omitempty" json:"limit,omitempty"`
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
@@ -278,11 +332,20 @@ type CreateCustomerJSONRequestBody = Customer
 // UpdateCustomerJSONRequestBody defines body for UpdateCustomer for application/json ContentType.
 type UpdateCustomerJSONRequestBody = Customer
 
+// PostFlutterwaveWebhookJSONRequestBody defines body for PostFlutterwaveWebhook for application/json ContentType.
+type PostFlutterwaveWebhookJSONRequestBody PostFlutterwaveWebhookJSONBody
+
 // CreateOrganizationJSONRequestBody defines body for CreateOrganization for application/json ContentType.
 type CreateOrganizationJSONRequestBody = Organization
 
 // UpdateOrganizationJSONRequestBody defines body for UpdateOrganization for application/json ContentType.
 type UpdateOrganizationJSONRequestBody = Organization
+
+// CreatePaymentJSONRequestBody defines body for CreatePayment for application/json ContentType.
+type CreatePaymentJSONRequestBody = Payment
+
+// UpdatePaymentByIdJSONRequestBody defines body for UpdatePaymentById for application/json ContentType.
+type UpdatePaymentByIdJSONRequestBody = Payment
 
 // PostQuestionsQuestionIdResponsesJSONRequestBody defines body for PostQuestionsQuestionIdResponses for application/json ContentType.
 type PostQuestionsQuestionIdResponsesJSONRequestBody = Response
@@ -349,6 +412,9 @@ type ServerInterface interface {
 	// Update a customer by ID
 	// (PUT /customers/{id})
 	UpdateCustomer(c *fiber.Ctx, id openapi_types.UUID) error
+	// Handle Flutterwave payment notifications
+	// (POST /flutterwave/webhook)
+	PostFlutterwaveWebhook(c *fiber.Ctx) error
 	// Get all organizations
 	// (GET /organizations)
 	GetOrganizations(c *fiber.Ctx, params GetOrganizationsParams) error
@@ -370,6 +436,21 @@ type ServerInterface interface {
 	// Get all users in an organization
 	// (GET /organizations/{organization_id}/users)
 	GetUsersByOrganization(c *fiber.Ctx, organizationId openapi_types.UUID, params GetUsersByOrganizationParams) error
+	// Get all payments
+	// (GET /payments)
+	GetAllPayments(c *fiber.Ctx, params GetAllPaymentsParams) error
+	// Create a new payment
+	// (POST /payments)
+	CreatePayment(c *fiber.Ctx) error
+	// Get payments by organization ID
+	// (GET /payments/organization/{organization_id})
+	GetPaymentsByOrganization(c *fiber.Ctx, organizationId openapi_types.UUID, params GetPaymentsByOrganizationParams) error
+	// Get a payment by ID
+	// (GET /payments/{id})
+	GetPaymentById(c *fiber.Ctx, id openapi_types.UUID) error
+	// Update a payment by ID
+	// (PUT /payments/{id})
+	UpdatePaymentById(c *fiber.Ctx, id openapi_types.UUID) error
 	// Delete a question
 	// (DELETE /questions/{questionId})
 	DeleteQuestionsQuestionId(c *fiber.Ctx, questionId openapi_types.UUID) error
@@ -798,6 +879,14 @@ func (siw *ServerInterfaceWrapper) UpdateCustomer(c *fiber.Ctx) error {
 	return siw.Handler.UpdateCustomer(c, id)
 }
 
+// PostFlutterwaveWebhook operation middleware
+func (siw *ServerInterfaceWrapper) PostFlutterwaveWebhook(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.PostFlutterwaveWebhook(c)
+}
+
 // GetOrganizations operation middleware
 func (siw *ServerInterfaceWrapper) GetOrganizations(c *fiber.Ctx) error {
 
@@ -980,6 +1069,124 @@ func (siw *ServerInterfaceWrapper) GetUsersByOrganization(c *fiber.Ctx) error {
 	}
 
 	return siw.Handler.GetUsersByOrganization(c, organizationId, params)
+}
+
+// GetAllPayments operation middleware
+func (siw *ServerInterfaceWrapper) GetAllPayments(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAllPaymentsParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.GetAllPayments(c, params)
+}
+
+// CreatePayment operation middleware
+func (siw *ServerInterfaceWrapper) CreatePayment(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreatePayment(c)
+}
+
+// GetPaymentsByOrganization operation middleware
+func (siw *ServerInterfaceWrapper) GetPaymentsByOrganization(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "organization_id" -------------
+	var organizationId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "organization_id", c.Params("organization_id"), &organizationId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter organization_id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPaymentsByOrganizationParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.GetPaymentsByOrganization(c, organizationId, params)
+}
+
+// GetPaymentById operation middleware
+func (siw *ServerInterfaceWrapper) GetPaymentById(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "id", c.Params("id"), &id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.GetPaymentById(c, id)
+}
+
+// UpdatePaymentById operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePaymentById(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "id", c.Params("id"), &id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdatePaymentById(c, id)
 }
 
 // DeleteQuestionsQuestionId operation middleware
@@ -1261,6 +1468,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Put(options.BaseURL+"/customers/:id", wrapper.UpdateCustomer)
 
+	router.Post(options.BaseURL+"/flutterwave/webhook", wrapper.PostFlutterwaveWebhook)
+
 	router.Get(options.BaseURL+"/organizations", wrapper.GetOrganizations)
 
 	router.Post(options.BaseURL+"/organizations", wrapper.CreateOrganization)
@@ -1274,6 +1483,16 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Put(options.BaseURL+"/organizations/:organization_id", wrapper.UpdateOrganization)
 
 	router.Get(options.BaseURL+"/organizations/:organization_id/users", wrapper.GetUsersByOrganization)
+
+	router.Get(options.BaseURL+"/payments", wrapper.GetAllPayments)
+
+	router.Post(options.BaseURL+"/payments", wrapper.CreatePayment)
+
+	router.Get(options.BaseURL+"/payments/organization/:organization_id", wrapper.GetPaymentsByOrganization)
+
+	router.Get(options.BaseURL+"/payments/:id", wrapper.GetPaymentById)
+
+	router.Put(options.BaseURL+"/payments/:id", wrapper.UpdatePaymentById)
 
 	router.Delete(options.BaseURL+"/questions/:questionId", wrapper.DeleteQuestionsQuestionId)
 
@@ -1300,56 +1519,66 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"vwAAAP//Ug6yrtBdAAA=",
+	"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",
+	"/wsAAP///S4YFb1vAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

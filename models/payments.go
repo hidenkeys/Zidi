@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -15,6 +13,5 @@ type Payment struct {
 	Amount         float64   `gorm:"not null"`
 	Status         string    `gorm:"type:varchar(20);not null"` // e.g., "pending", "completed", "failed"
 	TransactionRef string    `gorm:"uniqueIndex;not null"`
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	TransactionID  string    `gorm:"not null"`
 }

@@ -2,10 +2,15 @@ package utils
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -156,7 +161,12 @@ func CreatePaystackPaymentLink(email string, amount int, campaignID, organizatio
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
 
 	// Parse the response
 	var paystackResp PaystackResponse
@@ -169,4 +179,128 @@ func CreatePaystackPaymentLink(email string, amount int, campaignID, organizatio
 	}
 
 	return paystackResp.Data.AuthorizationURL, nil
+}
+
+// FlutterwaveResponse defines the response structure
+type FlutterwaveResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		Link string `json:"link"`
+	} `json:"data"`
+}
+
+func CreateFlutterwavePaymentLink(email string, amount int, campaignID, organizationID string) (string, error) {
+	flutterwaveURL := "https://api.flutterwave.com/v3/payments"
+	apiKey := os.Getenv("FLW_SECRET_KEY")
+
+	// Generate a unique transaction reference
+	txRef := fmt.Sprintf("%s-%s", campaignID, uuid.New().String())
+
+	requestBody, err := json.Marshal(map[string]interface{}{
+		"tx_ref":       txRef,
+		"amount":       amount,
+		"currency":     "NGN",
+		"redirect_url": "https://yourwebsite.com/payment-success",
+		"customer": map[string]string{
+			"email": email,
+		},
+		"metadata": map[string]string{
+			"campaign_id":     campaignID,
+			"organization_id": organizationID,
+		},
+		"customizations": map[string]string{
+			"title":       "Campaign Payment",
+			"description": "Payment for campaign",
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", flutterwaveURL, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
+
+	var flutterwaveResp FlutterwaveResponse
+	if err := json.NewDecoder(resp.Body).Decode(&flutterwaveResp); err != nil {
+		return "", err
+	}
+
+	if flutterwaveResp.Status != "success" {
+		return "", fmt.Errorf("failed to initialize payment: %s", flutterwaveResp.Message)
+	}
+
+	return flutterwaveResp.Data.Link, nil
+}
+
+func VerifyFlutterwaveSignature(body []byte, signature, secret string) bool {
+	if secret == "" || signature == "" {
+		return false
+	}
+
+	// Compute HMAC SHA-256 hash of the request body
+	hash := hmac.New(sha256.New, []byte(secret))
+	hash.Write(body)
+	expectedSignature := hex.EncodeToString(hash.Sum(nil))
+
+	return signature == expectedSignature
+}
+
+// verifyFlutterwaveTransaction checks transaction status from Flutterwave API
+func VerifyFlutterwaveTransaction(transactionID int) (bool, error) {
+	apiURL := fmt.Sprintf("https://api.flutterwave.com/v3/transactions/%d/verify", transactionID)
+	apiKey := os.Getenv("FLW_SECRET_KEY") // Get secret key from .env
+
+	// Make request to Flutterwave API
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return false, err
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
+
+	// Parse JSON response
+	var response map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return false, err
+	}
+
+	// Check if the transaction was successful
+	if status, ok := response["status"].(string); ok && status == "success" {
+		data, exists := response["data"].(map[string]interface{})
+		if exists {
+			if txStatus, ok := data["status"].(string); ok && txStatus == "successful" {
+				return true, nil
+			}
+		}
+	}
+	return false, fmt.Errorf("transaction not successful")
 }
