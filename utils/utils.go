@@ -267,14 +267,20 @@ func CreateFlutterwavePaymentLink(email string, amount int, campaignID, organiza
 }
 
 func VerifyFlutterwaveSignature(body []byte, signature, secret string) bool {
+	fmt.Println("00")
 	if secret == "" || signature == "" {
 		return false
 	}
 
+	fmt.Println("01")
+
 	// Compute HMAC SHA-256 hash of the request body
 	hash := hmac.New(sha256.New, []byte(secret))
+	fmt.Println("03")
 	hash.Write(body)
+	fmt.Println("03")
 	expectedSignature := hex.EncodeToString(hash.Sum(nil))
+	fmt.Println("04")
 
 	return signature == expectedSignature
 }
