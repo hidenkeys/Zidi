@@ -9,7 +9,16 @@ import (
 )
 
 func (s Server) GetAllCustomers(c *fiber.Ctx, params api.GetAllCustomersParams) error {
-	response, err := s.customerService.GetAllCustomers(context.Background(), *params.Limit, *params.Offset)
+	limit := 10
+	offset := 0
+
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+	response, err := s.customerService.GetAllCustomers(context.Background(), limit, offset)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
