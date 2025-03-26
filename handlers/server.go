@@ -9,6 +9,8 @@ import (
 	"github.com/hidenkeys/zidibackend/api"
 	"github.com/hidenkeys/zidibackend/services"
 	"github.com/hidenkeys/zidibackend/utils"
+	"gorm.io/gorm"
+
 	//openapi_types "github.com/oapi-codegen/runtime/types"
 	"net/http"
 	"os"
@@ -16,6 +18,7 @@ import (
 )
 
 type Server struct {
+	db              *gorm.DB
 	orgService      *services.OrganizationService
 	usrService      *services.UserService
 	campaignService *services.CampaignService
@@ -126,9 +129,14 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 		if _, err := s.paymentService.CreatePayment(ctx, &payment); err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to save payment record"})
 		}
+		// Update campaign status to "active"
+		campaign.Status = "active"
+		if err, _ := s.campaignService.UpdateCampaign(ctx, campaignID, campaign); err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update campaign status"})
+		}
 
 		return c.Status(http.StatusOK).JSON(fiber.Map{
-			"message": "Payment processed successfully, tokens generated",
+			"message": "Payment processed successfully, campaign activated, tokens generated",
 			"tokens":  tokens,
 		})
 	}
@@ -137,8 +145,9 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(fiber.Map{"message": "Webhook received"})
 }
 
-func NewServer(orgService *services.OrganizationService, usrService *services.UserService, campaignService *services.CampaignService, customerService *services.CustomerService, questionService *services.QuestionService, responseService *services.ResponseService, paymentService *services.PaymentService) *Server {
+func NewServer(db *gorm.DB, orgService *services.OrganizationService, usrService *services.UserService, campaignService *services.CampaignService, customerService *services.CustomerService, questionService *services.QuestionService, responseService *services.ResponseService, paymentService *services.PaymentService) *Server {
 	return &Server{
+		db:              db,
 		orgService:      orgService,
 		usrService:      usrService,
 		campaignService: campaignService,

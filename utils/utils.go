@@ -10,6 +10,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"github.com/hidenkeys/zidibackend/models"
+	"gorm.io/gorm"
 	"io"
 	"log"
 	"math/rand"
@@ -24,6 +26,21 @@ type UserClaims struct {
 	ID             string `json:"user_id"`
 	Role           string `json:"role"`
 	OrganizationID string `json:"organization_id"`
+}
+
+// RevokeToken stores a token in the database
+func RevokeToken(db *gorm.DB, token string, expiry time.Time) error {
+	t := models.Token{
+		Token:     token,
+		ExpiresAt: expiry,
+	}
+	return db.Create(&t).Error
+}
+
+func IsTokenRevoked(db *gorm.DB, token string) (bool, error) {
+	var count int64
+	err := db.Model(&models.Token{}).Where("token = ?", token).Count(&count).Error
+	return count > 0, err
 }
 
 var jwtSecret = []byte("your-secret-key")

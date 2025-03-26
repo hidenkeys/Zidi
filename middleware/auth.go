@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/hidenkeys/zidibackend/utils"
+	"gorm.io/gorm"
 	"strings"
 	"time"
 
@@ -31,22 +33,27 @@ var AllowedRoles = map[string]bool{
 	"user":  true,
 }
 
-// AuthMiddleware validates the JWT and enforces role-based access
-func AuthMiddleware(secretKey string, allowedRoles ...string) fiber.Handler {
+func AuthMiddleware(db *gorm.DB, secretKey string, allowedRoles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Get the token from Authorization header
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Missing token"})
 		}
 
-		// Extract token from "Bearer <token>"
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token format"})
 		}
 
-		// Parse the JWT token
+		// Check if the token is revoked
+		revoked, err := utils.IsTokenRevoked(db, tokenString)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Error checking token status"})
+		}
+		if revoked {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token has been revoked"})
+		}
+
 		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -58,23 +65,19 @@ func AuthMiddleware(secretKey string, allowedRoles ...string) fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token"})
 		}
 
-		// Extract claims properly
 		claims, ok := token.Claims.(*Claims)
 		if !ok {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token claims"})
 		}
 
-		// Check if the token is expired
 		if claims.ExpiresAt != nil && claims.ExpiresAt.Time.Before(time.Now()) {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token has expired"})
 		}
 
-		// Validate role from the allowed roles
 		if !AllowedRoles[claims.Role] {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Unauthorized role"})
 		}
 
-		// Check if the user's role is in the required roles for this route
 		if len(allowedRoles) > 0 {
 			roleAllowed := false
 			for _, role := range allowedRoles {
@@ -88,7 +91,6 @@ func AuthMiddleware(secretKey string, allowedRoles ...string) fiber.Handler {
 			}
 		}
 
-		// Attach claims to context for later use
 		c.Locals("user", UserClaims{
 			ID:             claims.UserID,
 			Role:           claims.Role,

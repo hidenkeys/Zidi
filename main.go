@@ -43,7 +43,7 @@ func main() {
 	paymentRepo := repository.NewPaymentRepoPG(db)
 	paymentService := services.NewPaymentService(paymentRepo)
 
-	server := handlers.NewServer(orgService, userService, campaignService, customerService, questionService, responseService, paymentService)
+	server := handlers.NewServer(db, orgService, userService, campaignService, customerService, questionService, responseService, paymentService)
 
 	app := fiber.New()
 
@@ -52,7 +52,7 @@ func main() {
 		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",                                                                                                                                                                                     // Allow specific HTTP methods
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",                                                                                                                                                                         // Allow custom headers
 	}))
-	userAuth := middleware.AuthMiddleware(string(jwtSecret), "user", "admin", "zidi")
+	userAuth := middleware.AuthMiddleware(db, string(jwtSecret), "user", "admin", "zidi")
 	app.Post("/api/v1/auth/login", server.LoginUser)
 	app.Use(userAuth)
 

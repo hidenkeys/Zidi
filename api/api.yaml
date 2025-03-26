@@ -442,6 +442,61 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /auth/logout:
+    post:
+      summary: User logout
+      operationId: LogoutUser
+      security:
+        - BearerAuth: [ ]
+      responses:
+        "200":
+          description: Successful logout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully logged out
+        "401":
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/superuser/login:
+    post:
+      summary: Superuser login
+      operationId: SuperuserLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Successful superuser login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT access token
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "401":
+          description: Unauthorized - Invalid credentials or insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /campaigns:
     post:
       summary: Create a new campaign
