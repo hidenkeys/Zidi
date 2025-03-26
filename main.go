@@ -54,6 +54,7 @@ func main() {
 	}))
 	userAuth := middleware.AuthMiddleware(db, string(jwtSecret), "user", "admin", "zidi")
 	app.Post("/api/v1/auth/login", server.LoginUser)
+	app.Post("/api/v1/flutterwave/webhook", server.PostFlutterwaveWebhook)
 	app.Use(userAuth)
 
 	//adminAuth := middleware.AuthMiddleware(string(jwtSecret), "admin")
@@ -63,7 +64,7 @@ func main() {
 	go telegrambot.StartBot(db)
 
 	api.RegisterHandlersWithOptions(app, server, api.FiberServerOptions{
-		BaseURL:     "/api/v1",
+		BaseURL: "/api/v1",
 		Middlewares: []api.MiddlewareFunc{
 			//userAuth,
 		},
