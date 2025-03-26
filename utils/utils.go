@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -279,7 +279,9 @@ func VerifyFlutterwaveSignature(body []byte, signature, secret string) bool {
 	fmt.Println("03")
 	hash.Write(body)
 	fmt.Println("03")
-	expectedSignature := hex.EncodeToString(hash.Sum(nil))
+	expectedSignature := base64.StdEncoding.EncodeToString(hash.Sum(nil))
+	fmt.Println("signature", signature)
+	fmt.Println("expected sigaturew", expectedSignature)
 	fmt.Println("04")
 
 	return signature == expectedSignature
