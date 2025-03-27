@@ -222,7 +222,7 @@ func CreateFlutterwavePaymentLink(email string, amount int, campaignID, organiza
 		"customer": map[string]string{
 			"email": email,
 		},
-		"metadata": map[string]string{
+		"meta_data": map[string]string{
 			"campaign_id":     campaignID,
 			"organization_id": organizationID,
 		},
