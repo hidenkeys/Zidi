@@ -51,9 +51,10 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	secretHash := os.Getenv("FLW_SECRET_HASH") // Ensure this is set in your .env file
 
 	fmt.Println("secretHash", secretHash)
-	if !utils.VerifyFlutterwaveSignature(body, signature, secretHash) {
+	if signature != secretHash {
 		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid signature"})
 	}
+
 	fmt.Println("2")
 	// Parse JSON payload
 	var payload FlutterwaveWebhookPayload
