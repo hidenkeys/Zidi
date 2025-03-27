@@ -220,11 +220,9 @@ func CreateFlutterwavePaymentLink(email string, amount int, campaignID, organiza
 		"currency":     "NGN",
 		"redirect_url": "https://yourwebsite.com/payment-success",
 		"customer": map[string]string{
-			"email":           email,
-			"campaign_id":     campaignID,
-			"organization_id": organizationID,
+			"email": email,
 		},
-		"meta_data": map[string]string{
+		"meta": map[string]string{
 			"campaign_id":     campaignID,
 			"organization_id": organizationID,
 		},
