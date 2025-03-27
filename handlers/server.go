@@ -41,21 +41,17 @@ type FlutterwaveWebhookPayload struct {
 
 func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	// Read request body
-	fmt.Println("0")
 	body := c.Body()
 
-	fmt.Println("1")
+	fmt.Println(string(body))
 	// Verify request signature
 	signature := c.Get("verif-hash")
-	fmt.Println("sinature", signature)
 	secretHash := os.Getenv("FLW_SECRET_HASH") // Ensure this is set in your .env file
 
-	fmt.Println("secretHash", secretHash)
 	if signature != secretHash {
 		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid signature"})
 	}
 
-	fmt.Println("2")
 	// Parse JSON payload
 	var payload FlutterwaveWebhookPayload
 	if err := json.Unmarshal(body, &payload); err != nil {
