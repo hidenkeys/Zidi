@@ -35,7 +35,7 @@ type FlutterwaveWebhookPayload struct {
 		Status string                 `json:"status"`
 		TxRef  string                 `json:"tx_ref"`
 		Amount int                    `json:"amount"`
-		Meta   map[string]interface{} `json:"meta"` // Add this line
+		Meta   map[string]interface{} `json:"meta_data"` // Add this line
 	} `json:"data"`
 }
 
@@ -73,6 +73,8 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	if err != nil || !isVerified {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Transaction verification failed"})
 	}
+
+	fmt.Println(payload.Data)
 
 	if payload.Data.Status == "successful" {
 		fmt.Printf("Transaction %s verified. Processing payment...\n", transactionID)
