@@ -31,12 +31,39 @@ type Server struct {
 type FlutterwaveWebhookPayload struct {
 	Event string `json:"event"`
 	Data  struct {
-		ID     int                    `json:"id"`
-		Status string                 `json:"status"`
-		TxRef  string                 `json:"tx_ref"`
-		Amount int                    `json:"amount"`
-		Meta   map[string]interface{} `json:"meta_data"` // Add this line
+		ID                int    `json:"id"`
+		TxRef             string `json:"tx_ref"`
+		FlwRef            string `json:"flw_ref"`
+		Amount            int    `json:"amount"`
+		Currency          string `json:"currency"`
+		ChargedAmount     int    `json:"charged_amount"`
+		AppFee            int    `json:"app_fee"`
+		MerchantFee       int    `json:"merchant_fee"`
+		ProcessorResponse string `json:"processor_response"`
+		AuthModel         string `json:"auth_model"`
+		IP                string `json:"ip"`
+		Narration         string `json:"narration"`
+		Status            string `json:"status"`
+		PaymentType       string `json:"payment_type"`
+		CreatedAt         string `json:"created_at"`
+		AccountID         int    `json:"account_id"`
+		Customer          struct {
+			ID          int    `json:"id"`
+			Name        string `json:"name"`
+			PhoneNumber string `json:"phone_number"`
+			Email       string `json:"email"`
+			CreatedAt   string `json:"created_at"`
+		} `json:"customer"`
 	} `json:"data"`
+	Meta struct {
+		CheckoutInitAddress     string `json:"__CheckoutInitAddress"`
+		CampaignID              string `json:"campaign_id"`
+		OrganizationID          string `json:"organization_id"`
+		OriginatorAccountNumber string `json:"originatoraccountnumber"`
+		OriginatorName          string `json:"originatorname"`
+		BankName                string `json:"bankname"`
+		OriginatorAmount        string `json:"originatoramount"`
+	} `json:"meta_data"`
 }
 
 func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
@@ -87,12 +114,12 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 
 		// Extract campaign ID from metadata
 		// Extract campaign ID from metadata
-		campaignIDStr, exists := payload.Data.Meta["campaign_id"]
-		if !exists {
+		campaignIDStr := payload.Meta.CampaignID
+		if campaignIDStr == "" {
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Missing campaign ID"})
 		}
 
-		campaignID, err := uuid.Parse(campaignIDStr.(string))
+		campaignID, err := uuid.Parse(campaignIDStr)
 		if err != nil {
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid campaign ID"})
 		}
