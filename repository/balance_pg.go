@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"context"
 	"errors"
 
 	"github.com/google/uuid"
@@ -17,27 +16,27 @@ func NewBalanceRepoPG(db *gorm.DB) *BalanceRepoPG {
 	return &BalanceRepoPG{db: db}
 }
 
-func (r *BalanceRepoPG) CreateBalance(ctx context.Context, balance *models.Balance) error {
-	return r.db.WithContext(ctx).Create(balance).Error
+func (r *BalanceRepoPG) CreateBalance(balance *models.Balance) error {
+	return r.db.Create(balance).Error
 }
 
-func (r *BalanceRepoPG) GetBalanceByCampaign(ctx context.Context, campaignId uuid.UUID) (*models.Balance, error) {
+func (r *BalanceRepoPG) GetBalanceByCampaign(campaignId uuid.UUID) (*models.Balance, error) {
 	var balance models.Balance
-	err := r.db.WithContext(ctx).Where("campaign_id = ?", campaignId).First(&balance).Error
+	err := r.db.Where("campaign_id = ?", campaignId).First(&balance).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	return &balance, err
 }
 
-func (r *BalanceRepoPG) UpdateBalance(ctx context.Context, campaignId uuid.UUID, amount float64) error {
-	return r.db.WithContext(ctx).Model(&models.Balance{}).
+func (r *BalanceRepoPG) UpdateBalance(campaignId uuid.UUID, amount float64) error {
+	return r.db.Model(&models.Balance{}).
 		Where("campaign_id = ?", campaignId).
 		Update("amount", amount).Error
 }
 
-func (r *BalanceRepoPG) GetAllBalances(ctx context.Context, limit, offset int) ([]models.Balance, error) {
+func (r *BalanceRepoPG) GetAllBalances(limit, offset int) ([]models.Balance, error) {
 	var balances []models.Balance
-	err := r.db.WithContext(ctx).Limit(limit).Offset(offset).Find(&balances).Error
+	err := r.db.Limit(limit).Offset(offset).Find(&balances).Error
 	return balances, err
 }
