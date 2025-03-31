@@ -1,8 +1,13 @@
 package telegrambot
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/hidenkeys/zidibackend/api"
+	"github.com/hidenkeys/zidibackend/repository"
+	"github.com/hidenkeys/zidibackend/services"
+	"github.com/hidenkeys/zidibackend/utils"
 	"log"
 	"os"
 	"time"
@@ -254,9 +259,45 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 			return c.Send("❌ An error occurred while redeeming your coupon. Please try again later.")
 		}
 
+		airtimeRespose, err := utils.SendAirtime(session.Customer.Phone, session.Amount)
+		if err != nil {
+			log.Println("❌ Error sending airtime:", err)
+			return c.Send("❌ An error occurred while sending your airtime. Please try again later.")
+		}
+
+		// Create a new transaction after sending airtime
+		transactionInput := &api.TransactionInput{
+			OrganizationId: session.OrganizationID,
+			CampaignId:     session.CampaignID,
+			CustomerId:     session.Customer.ID,
+			Network:        airtimeRespose.Data.Network,
+			PhoneNumber:    airtimeRespose.Data.PhoneNumber,
+			TxReference:    airtimeRespose.Data.TxRef,
+			Amount:         float32(session.Amount),
+			Type:           "airtime",
+			Reference:      airtimeRespose.Data.Reference,
+		}
+
+		transactionRepo := repository.NewTransactionRepoPG(db)
+		transactionService := services.NewTransactionService(transactionRepo) // assuming you have a repository
+		transaction, err := transactionService.CreateTransaction(context.Background(), transactionInput)
+		if err != nil {
+			log.Println("❌ Error creating transaction:", err)
+			return c.Send("❌ An error occurred while processing your transaction. Please try again later.")
+		}
+		balanceRepo := repository.NewBalanceRepoPG(db)
+		balanceService := services.NewBalanceService(balanceRepo)
+		_, err = balanceService.UpdateBalance(context.Background(), session.CampaignID, session.Amount)
+		if err != nil {
+			log.Println("❌ Error updating balance:", err)
+		}
+
+		// Transaction created successfully
+		log.Println("✅ Transaction created:", transaction.Reference)
+
 		// Final success message
 		delete(sessions, userID)
-		return c.Send("🎉 Congratulations! Your coupon has been successfully redeemed. Thank you for participating!")
+		return c.Send("🎉 Congratulations! Your coupon has been successfully redeemed. amout paid = ", session.Amount, " Thank you for participating!")
 	}
 
 	return nil

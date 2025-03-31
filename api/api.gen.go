@@ -25,9 +25,9 @@ const (
 
 // Defines values for PaymentStatus.
 const (
-	Completed PaymentStatus = "completed"
-	Failed    PaymentStatus = "failed"
-	Pending   PaymentStatus = "pending"
+	PaymentStatusCompleted PaymentStatus = "completed"
+	PaymentStatusFailed    PaymentStatus = "failed"
+	PaymentStatusPending   PaymentStatus = "pending"
 )
 
 // Defines values for QuestionType.
@@ -36,6 +36,45 @@ const (
 	Rating         QuestionType = "rating"
 	Text           QuestionType = "text"
 )
+
+// Defines values for TransactionStatus.
+const (
+	TransactionStatusFailed  TransactionStatus = "failed"
+	TransactionStatusPending TransactionStatus = "pending"
+	TransactionStatusSuccess TransactionStatus = "success"
+)
+
+// Defines values for TransactionType.
+const (
+	TransactionTypeAirtime TransactionType = "airtime"
+)
+
+// Defines values for TransactionInputStatus.
+const (
+	TransactionInputStatusFailed  TransactionInputStatus = "failed"
+	TransactionInputStatusPending TransactionInputStatus = "pending"
+	TransactionInputStatusSuccess TransactionInputStatus = "success"
+)
+
+// Defines values for TransactionInputType.
+const (
+	TransactionInputTypeAirtime TransactionInputType = "airtime"
+)
+
+// Defines values for TransactionStatusUpdateStatus.
+const (
+	TransactionStatusUpdateStatusFailed     TransactionStatusUpdateStatus = "failed"
+	TransactionStatusUpdateStatusPending    TransactionStatusUpdateStatus = "pending"
+	TransactionStatusUpdateStatusSuccessful TransactionStatusUpdateStatus = "successful"
+)
+
+// Balance defines model for Balance.
+type Balance struct {
+	Amount          float32            `json:"amount"`
+	CampaignId      openapi_types.UUID `json:"campaignId"`
+	Id              openapi_types.UUID `json:"id"`
+	StartingBalance float32            `json:"startingBalance"`
+}
 
 // Campaign defines model for Campaign.
 type Campaign struct {
@@ -60,6 +99,13 @@ type Coupon struct {
 	Id         openapi_types.UUID `json:"id"`
 	Redeemed   bool               `json:"redeemed"`
 	RedeemedAt *time.Time         `json:"redeemedAt"`
+}
+
+// CreateBalanceRequest defines model for CreateBalanceRequest.
+type CreateBalanceRequest struct {
+	Amount          float32            `json:"amount"`
+	CampaignId      openapi_types.UUID `json:"campaignId"`
+	StartingBalance float32            `json:"startingBalance"`
 }
 
 // CreateUserRequestBody defines model for CreateUserRequestBody.
@@ -148,6 +194,60 @@ type Response struct {
 	QuestionId openapi_types.UUID `json:"questionId"`
 }
 
+// Transaction defines model for Transaction.
+type Transaction struct {
+	Amount         float32            `json:"amount"`
+	CampaignId     openapi_types.UUID `json:"campaignId"`
+	CustomerId     openapi_types.UUID `json:"customerId"`
+	Id             openapi_types.UUID `json:"id"`
+	Network        string             `json:"network"`
+	OrganizationId openapi_types.UUID `json:"organizationId"`
+	PhoneNumber    string             `json:"phoneNumber"`
+	Reference      string             `json:"reference"`
+	Status         TransactionStatus  `json:"status"`
+	TxReference    string             `json:"txReference"`
+	Type           TransactionType    `json:"type"`
+}
+
+// TransactionStatus defines model for Transaction.Status.
+type TransactionStatus string
+
+// TransactionType defines model for Transaction.Type.
+type TransactionType string
+
+// TransactionInput defines model for TransactionInput.
+type TransactionInput struct {
+	Amount         float32                `json:"amount"`
+	CampaignId     openapi_types.UUID     `json:"campaignId"`
+	CustomerId     openapi_types.UUID     `json:"customerId"`
+	Network        string                 `json:"network"`
+	OrganizationId openapi_types.UUID     `json:"organizationId"`
+	PhoneNumber    string                 `json:"phoneNumber"`
+	Reference      string                 `json:"reference"`
+	Status         TransactionInputStatus `json:"status"`
+	TxReference    string                 `json:"txReference"`
+	Type           TransactionInputType   `json:"type"`
+}
+
+// TransactionInputStatus defines model for TransactionInput.Status.
+type TransactionInputStatus string
+
+// TransactionInputType defines model for TransactionInput.Type.
+type TransactionInputType string
+
+// TransactionStatusUpdate defines model for TransactionStatusUpdate.
+type TransactionStatusUpdate struct {
+	Status TransactionStatusUpdateStatus `json:"status"`
+}
+
+// TransactionStatusUpdateStatus defines model for TransactionStatusUpdate.Status.
+type TransactionStatusUpdateStatus string
+
+// UpdateBalanceRequest defines model for UpdateBalanceRequest.
+type UpdateBalanceRequest struct {
+	Amount float32 `json:"amount"`
+}
+
 // User defines model for User.
 type User struct {
 	Address        string              `json:"address"`
@@ -168,6 +268,12 @@ type InternalServerError = Error
 
 // NotFound defines model for NotFound.
 type NotFound = Error
+
+// GetAllBalancesParams defines parameters for GetAllBalances.
+type GetAllBalancesParams struct {
+	Limit  *int `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
 
 // GetAllCampaignsParams defines parameters for GetAllCampaigns.
 type GetAllCampaignsParams struct {
@@ -291,6 +397,15 @@ type GetQuestionsQuestionIdResponsesParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// ListTransactionsParams defines parameters for ListTransactions.
+type ListTransactionsParams struct {
+	// Limit Number of transactions to return per page.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of transactions to skip for pagination.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // GetUsersParams defines parameters for GetUsers.
 type GetUsersParams struct {
 	// Limit Number of users to return (pagination)
@@ -319,6 +434,12 @@ type LoginUserJSONRequestBody = LoginRequest
 
 // SuperuserLoginJSONRequestBody defines body for SuperuserLogin for application/json ContentType.
 type SuperuserLoginJSONRequestBody = LoginRequest
+
+// CreateBalanceJSONRequestBody defines body for CreateBalance for application/json ContentType.
+type CreateBalanceJSONRequestBody = CreateBalanceRequest
+
+// UpdateBalanceJSONRequestBody defines body for UpdateBalance for application/json ContentType.
+type UpdateBalanceJSONRequestBody = UpdateBalanceRequest
 
 // CreateCampaignJSONRequestBody defines body for CreateCampaign for application/json ContentType.
 type CreateCampaignJSONRequestBody = Campaign
@@ -353,6 +474,12 @@ type UpdatePaymentByIdJSONRequestBody = Payment
 // PostQuestionsQuestionIdResponsesJSONRequestBody defines body for PostQuestionsQuestionIdResponses for application/json ContentType.
 type PostQuestionsQuestionIdResponsesJSONRequestBody = Response
 
+// CreateTransactionJSONRequestBody defines body for CreateTransaction for application/json ContentType.
+type CreateTransactionJSONRequestBody = TransactionInput
+
+// UpdateTransactionStatusJSONRequestBody defines body for UpdateTransactionStatus for application/json ContentType.
+type UpdateTransactionStatusJSONRequestBody = TransactionStatusUpdate
+
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody = CreateUserRequestBody
 
@@ -373,6 +500,18 @@ type ServerInterface interface {
 	// Superuser login
 	// (POST /auth/superuser/login)
 	SuperuserLogin(c *fiber.Ctx) error
+	// Get all balances
+	// (GET /balances)
+	GetAllBalances(c *fiber.Ctx, params GetAllBalancesParams) error
+	// Create a new balance
+	// (POST /balances)
+	CreateBalance(c *fiber.Ctx) error
+	// Get balance by campaign
+	// (GET /balances/{campaignId})
+	GetBalanceByCampaign(c *fiber.Ctx, campaignId openapi_types.UUID) error
+	// Update balance by campaign
+	// (PATCH /balances/{campaignId})
+	UpdateBalance(c *fiber.Ctx, campaignId openapi_types.UUID) error
 	// Get all campaigns
 	// (GET /campaigns)
 	GetAllCampaigns(c *fiber.Ctx, params GetAllCampaignsParams) error
@@ -469,6 +608,18 @@ type ServerInterface interface {
 	// Create a response for a question
 	// (POST /questions/{questionId}/responses)
 	PostQuestionsQuestionIdResponses(c *fiber.Ctx, questionId openapi_types.UUID) error
+	// Get all transactions
+	// (GET /transactions)
+	ListTransactions(c *fiber.Ctx, params ListTransactionsParams) error
+	// Create a new transaction
+	// (POST /transactions)
+	CreateTransaction(c *fiber.Ctx) error
+	// Get a transaction by ID
+	// (GET /transactions/{transactionId})
+	GetTransaction(c *fiber.Ctx, transactionId openapi_types.UUID) error
+	// Update transaction status
+	// (PATCH /transactions/{transactionId})
+	UpdateTransactionStatus(c *fiber.Ctx, transactionId openapi_types.UUID) error
 	// Get all users
 	// (GET /users)
 	GetUsers(c *fiber.Ctx, params GetUsersParams) error
@@ -521,6 +672,83 @@ func (siw *ServerInterfaceWrapper) SuperuserLogin(c *fiber.Ctx) error {
 	c.Context().SetUserValue(BearerAuthScopes, []string{})
 
 	return siw.Handler.SuperuserLogin(c)
+}
+
+// GetAllBalances operation middleware
+func (siw *ServerInterfaceWrapper) GetAllBalances(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAllBalancesParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.GetAllBalances(c, params)
+}
+
+// CreateBalance operation middleware
+func (siw *ServerInterfaceWrapper) CreateBalance(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreateBalance(c)
+}
+
+// GetBalanceByCampaign operation middleware
+func (siw *ServerInterfaceWrapper) GetBalanceByCampaign(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "campaignId" -------------
+	var campaignId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "campaignId", c.Params("campaignId"), &campaignId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter campaignId: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.GetBalanceByCampaign(c, campaignId)
+}
+
+// UpdateBalance operation middleware
+func (siw *ServerInterfaceWrapper) UpdateBalance(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "campaignId" -------------
+	var campaignId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "campaignId", c.Params("campaignId"), &campaignId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter campaignId: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdateBalance(c, campaignId)
 }
 
 // GetAllCampaigns operation middleware
@@ -1291,6 +1519,83 @@ func (siw *ServerInterfaceWrapper) PostQuestionsQuestionIdResponses(c *fiber.Ctx
 	return siw.Handler.PostQuestionsQuestionIdResponses(c, questionId)
 }
 
+// ListTransactions operation middleware
+func (siw *ServerInterfaceWrapper) ListTransactions(c *fiber.Ctx) error {
+
+	var err error
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTransactionsParams
+
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", query, &params.Offset)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter offset: %w", err).Error())
+	}
+
+	return siw.Handler.ListTransactions(c, params)
+}
+
+// CreateTransaction operation middleware
+func (siw *ServerInterfaceWrapper) CreateTransaction(c *fiber.Ctx) error {
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.CreateTransaction(c)
+}
+
+// GetTransaction operation middleware
+func (siw *ServerInterfaceWrapper) GetTransaction(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "transactionId" -------------
+	var transactionId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "transactionId", c.Params("transactionId"), &transactionId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter transactionId: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.GetTransaction(c, transactionId)
+}
+
+// UpdateTransactionStatus operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTransactionStatus(c *fiber.Ctx) error {
+
+	var err error
+
+	// ------------- Path parameter "transactionId" -------------
+	var transactionId openapi_types.UUID
+
+	err = runtime.BindStyledParameter("simple", false, "transactionId", c.Params("transactionId"), &transactionId)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter transactionId: %w", err).Error())
+	}
+
+	c.Context().SetUserValue(BearerAuthScopes, []string{})
+
+	return siw.Handler.UpdateTransactionStatus(c, transactionId)
+}
+
 // GetUsers operation middleware
 func (siw *ServerInterfaceWrapper) GetUsers(c *fiber.Ctx) error {
 
@@ -1465,6 +1770,14 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Post(options.BaseURL+"/auth/superuser/login", wrapper.SuperuserLogin)
 
+	router.Get(options.BaseURL+"/balances", wrapper.GetAllBalances)
+
+	router.Post(options.BaseURL+"/balances", wrapper.CreateBalance)
+
+	router.Get(options.BaseURL+"/balances/:campaignId", wrapper.GetBalanceByCampaign)
+
+	router.Patch(options.BaseURL+"/balances/:campaignId", wrapper.UpdateBalance)
+
 	router.Get(options.BaseURL+"/campaigns", wrapper.GetAllCampaigns)
 
 	router.Post(options.BaseURL+"/campaigns", wrapper.CreateCampaign)
@@ -1529,6 +1842,14 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Post(options.BaseURL+"/questions/:questionId/responses", wrapper.PostQuestionsQuestionIdResponses)
 
+	router.Get(options.BaseURL+"/transactions", wrapper.ListTransactions)
+
+	router.Post(options.BaseURL+"/transactions", wrapper.CreateTransaction)
+
+	router.Get(options.BaseURL+"/transactions/:transactionId", wrapper.GetTransaction)
+
+	router.Patch(options.BaseURL+"/transactions/:transactionId", wrapper.UpdateTransactionStatus)
+
 	router.Get(options.BaseURL+"/users", wrapper.GetUsers)
 
 	router.Post(options.BaseURL+"/users", wrapper.CreateUser)
@@ -1548,67 +1869,77 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

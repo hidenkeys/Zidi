@@ -36,10 +36,10 @@ func (s *PaymentService) CreatePayment(ctx context.Context, req *api.Payment) (*
 	return mapToAPIPayment(payment), nil
 }
 
-func (s *PaymentService) GetAllPayments(ctx context.Context, limit, offset int) ([]api.Payment, error) {
-	payments, _, err := s.paymentRepo.GetAll(limit, offset)
+func (s *PaymentService) GetAllPayments(ctx context.Context, limit, offset int) ([]api.Payment, int64, error) {
+	payments, count, err := s.paymentRepo.GetAll(limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
 
 	var finalPayments []api.Payment
@@ -47,13 +47,13 @@ func (s *PaymentService) GetAllPayments(ctx context.Context, limit, offset int) 
 		finalPayments = append(finalPayments, *mapToAPIPayment(&payment))
 	}
 
-	return finalPayments, nil
+	return finalPayments, count, nil
 }
 
-func (s *PaymentService) GetPaymentsByOrganization(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]api.Payment, error) {
-	payments, _, err := s.paymentRepo.GetAllByOrganization(orgID, limit, offset)
+func (s *PaymentService) GetPaymentsByOrganization(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]api.Payment, int64, error) {
+	payments, count, err := s.paymentRepo.GetAllByOrganization(orgID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
 
 	var finalPayments []api.Payment
@@ -61,7 +61,7 @@ func (s *PaymentService) GetPaymentsByOrganization(ctx context.Context, orgID uu
 		finalPayments = append(finalPayments, *mapToAPIPayment(&payment))
 	}
 
-	return finalPayments, nil
+	return finalPayments, count, nil
 }
 
 func (s *PaymentService) GetPaymentByID(ctx context.Context, id uuid.UUID) (*api.Payment, error) {

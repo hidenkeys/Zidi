@@ -56,9 +56,9 @@ func main() {
 		}
 
 		var campaign models.Campaign
-		if err := config.DB.Where("id = ?", campaignID).First(&campaign).Error; err != nil {
+		if err := config.DB.Where("id = ? AND status = ?", campaignID, "active").First(&campaign).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
-				return c.Send("❌ Campaign not found.")
+				return c.Send("❌ Campaign not found or not active.")
 			}
 			return c.Send("❌ An error occurred while fetching the campaign.")
 		}

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,8 @@ import (
 	"github.com/hidenkeys/zidibackend/services"
 	"github.com/hidenkeys/zidibackend/utils"
 	"gorm.io/gorm"
+	"html/template"
+	"log"
 
 	//openapi_types "github.com/oapi-codegen/runtime/types"
 	"net/http"
@@ -17,15 +20,24 @@ import (
 	"strconv"
 )
 
+type ppayment struct {
+	Name            string
+	Amount          string
+	CampaignName    string
+	TelegramBotLink string
+}
+
 type Server struct {
-	db              *gorm.DB
-	orgService      *services.OrganizationService
-	usrService      *services.UserService
-	campaignService *services.CampaignService
-	customerService *services.CustomerService
-	questionService *services.QuestionService
-	responseService *services.ResponseService
-	paymentService  *services.PaymentService
+	db                 *gorm.DB
+	orgService         *services.OrganizationService
+	usrService         *services.UserService
+	campaignService    *services.CampaignService
+	customerService    *services.CustomerService
+	questionService    *services.QuestionService
+	responseService    *services.ResponseService
+	paymentService     *services.PaymentService
+	transactionService *services.TransactionService
+	balanceService     *services.BalanceService
 }
 
 type FlutterwaveWebhookPayload struct {
@@ -70,7 +82,6 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	// Read request body
 	body := c.Body()
 
-	fmt.Println(string(body))
 	// Verify request signature
 	signature := c.Get("verif-hash")
 	secretHash := os.Getenv("FLW_SECRET_HASH") // Ensure this is set in your .env file
@@ -84,8 +95,6 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	if err := json.Unmarshal(body, &payload); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid JSON payload"})
 	}
-
-	fmt.Println("3")
 	// Log received webhook for debugging
 	fmt.Printf("Received Flutterwave Webhook: %+v\n", payload)
 
@@ -101,9 +110,26 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Transaction verification failed"})
 	}
 
-	fmt.Println(payload.Data)
+	// Extract campaign ID from metadata
+	campaignIDStr := payload.Meta.CampaignID
+	if campaignIDStr == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Missing campaign ID"})
+	}
 
-	if payload.Data.Status == "successful" {
+	campaignID, err := uuid.Parse(campaignIDStr)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid campaign ID"})
+	}
+
+	// Retrieve campaign details
+	ctx := context.Background()
+
+	campaign, err := s.campaignService.GetCampaignByID(ctx, campaignID)
+	if err != nil {
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "Campaign not found"})
+	}
+
+	if payload.Data.Status == "successful" && float32(payload.Data.Amount) == campaign.Price {
 		fmt.Printf("Transaction %s verified. Processing payment...\n", transactionID)
 
 		// Extract metadata from webhook
@@ -111,24 +137,14 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 		//if !ok {
 		//	return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid metadata format"})
 		//}
-
-		// Extract campaign ID from metadata
-		// Extract campaign ID from metadata
-		campaignIDStr := payload.Meta.CampaignID
-		if campaignIDStr == "" {
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Missing campaign ID"})
+		// Create balance record
+		balance := api.Balance{
+			CampaignId:      campaignID,
+			StartingBalance: float32(payload.Data.Amount),
+			Amount:          float32(payload.Data.Amount),
 		}
-
-		campaignID, err := uuid.Parse(campaignIDStr)
-		if err != nil {
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid campaign ID"})
-		}
-
-		// Retrieve campaign details
-		ctx := context.Background()
-		campaign, err := s.campaignService.GetCampaignByID(ctx, campaignID)
-		if err != nil {
-			return c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "Campaign not found"})
+		if _, err := s.balanceService.CreateBalance(ctx, &balance); err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create balance record"})
 		}
 
 		// Generate tokens
@@ -166,6 +182,42 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update campaign status"})
 		}
 
+		response, err := s.orgService.GetOrganizationByID(context.Background(), campaign.OrganizationId)
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(api.Error{
+				ErrorCode: "500",
+				Message:   err.Error(),
+			})
+		}
+
+		link := "https://t.me/zidipromobot?start=" + campaignID.String()
+		tmp := ppayment{
+			Name:            response.ContactPersonName,
+			Amount:          strconv.Itoa(int(campaign.Amount) * 100),
+			CampaignName:    campaign.CampaignName,
+			TelegramBotLink: link, // Updated to use Flutterwave link
+		}
+
+		tmpl, err := template.ParseFiles("Zidi-payment-successful-email-template.html")
+		if err != nil {
+			log.Fatalf("Error loading template: %v", err)
+		}
+
+		var tpl bytes.Buffer
+		if err := tmpl.Execute(&tpl, tmp); err != nil {
+			log.Fatalf("Error executing template: %v", err)
+		}
+
+		createBody := tpl.String()
+
+		err = utils.SendEmail(string(response.Email), "Complete your "+campaign.CampaignName+" Campaign Payment", createBody)
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(api.Error{
+				ErrorCode: "500",
+				Message:   err.Error(),
+			})
+		}
+
 		return c.Status(http.StatusOK).JSON(fiber.Map{
 			"message": "Payment processed successfully, campaign activated, tokens generated",
 			"tokens":  tokens,
@@ -176,15 +228,17 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(fiber.Map{"message": "Webhook received"})
 }
 
-func NewServer(db *gorm.DB, orgService *services.OrganizationService, usrService *services.UserService, campaignService *services.CampaignService, customerService *services.CustomerService, questionService *services.QuestionService, responseService *services.ResponseService, paymentService *services.PaymentService) *Server {
+func NewServer(db *gorm.DB, balanceService *services.BalanceService, transactionService *services.TransactionService, orgService *services.OrganizationService, usrService *services.UserService, campaignService *services.CampaignService, customerService *services.CustomerService, questionService *services.QuestionService, responseService *services.ResponseService, paymentService *services.PaymentService) *Server {
 	return &Server{
-		db:              db,
-		orgService:      orgService,
-		usrService:      usrService,
-		campaignService: campaignService,
-		customerService: customerService,
-		questionService: questionService,
-		responseService: responseService,
-		paymentService:  paymentService,
+		db:                 db,
+		balanceService:     balanceService,
+		transactionService: transactionService,
+		orgService:         orgService,
+		usrService:         usrService,
+		campaignService:    campaignService,
+		customerService:    customerService,
+		questionService:    questionService,
+		responseService:    responseService,
+		paymentService:     paymentService,
 	}
 }

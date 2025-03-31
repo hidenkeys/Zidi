@@ -18,7 +18,7 @@ func (s Server) GetAllCustomers(c *fiber.Ctx, params api.GetAllCustomersParams) 
 	if params.Offset != nil {
 		offset = *params.Offset
 	}
-	response, err := s.customerService.GetAllCustomers(context.Background(), limit, offset)
+	response, count, err := s.customerService.GetAllCustomers(context.Background(), limit, offset)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
@@ -27,6 +27,7 @@ func (s Server) GetAllCustomers(c *fiber.Ctx, params api.GetAllCustomersParams) 
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"Message": "Success",
+		"Count":   count,
 		"Data":    response,
 	})
 }
@@ -77,7 +78,7 @@ func (s Server) GetCustomersByOrganization(c *fiber.Ctx, params api.GetCustomers
 	if params.Offset != nil {
 		offset = *params.Offset
 	}
-	customers, err := s.customerService.GetCustomersByOrganization(context.Background(), params.OrganizationId, limit, offset)
+	customers, count, err := s.customerService.GetCustomersByOrganization(context.Background(), params.OrganizationId, limit, offset)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
@@ -85,7 +86,11 @@ func (s Server) GetCustomersByOrganization(c *fiber.Ctx, params api.GetCustomers
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(customers)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"Message": "Success",
+		"Count":   count,
+		"Data":    customers,
+	})
 }
 
 func (s Server) DeleteCustomer(c *fiber.Ctx, id openapi_types.UUID) error {

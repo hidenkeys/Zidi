@@ -18,14 +18,18 @@ func (s Server) GetAllPayments(c *fiber.Ctx, params api.GetAllPaymentsParams) er
 	if params.Offset != nil {
 		offset = *params.Offset
 	}
-	response, err := s.paymentService.GetAllPayments(context.Background(), limit, offset)
+	response, count, err := s.paymentService.GetAllPayments(context.Background(), limit, offset)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
 			Message:   err.Error(),
 		})
 	}
-	return c.Status(http.StatusOK).JSON(response)
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "success",
+		"data":    response,
+		"count":   count,
+	})
 }
 
 func (s Server) CreatePayment(c *fiber.Ctx) error {
@@ -44,14 +48,18 @@ func (s Server) GetPaymentsByOrganization(c *fiber.Ctx, organizationId openapi_t
 		offset = *params.Offset
 	}
 
-	response, err := s.paymentService.GetPaymentsByOrganization(context.Background(), organizationId, limit, offset)
+	response, count, err := s.paymentService.GetPaymentsByOrganization(context.Background(), organizationId, limit, offset)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
 			Message:   err.Error(),
 		})
 	}
-	return c.Status(http.StatusOK).JSON(response)
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "success",
+		"count":   count,
+		"data":    response,
+	})
 }
 
 func (s Server) GetPaymentById(c *fiber.Ctx, id openapi_types.UUID) error {

@@ -22,7 +22,7 @@ func ConnectDatabase() {
 }
 
 func MigrateDatabase() {
-	err := DB.AutoMigrate(&models.Organization{}, &models.User{}, &models.Campaign{}, &models.Customer{}, &models.Question{}, &models.Response{}, &models.Coupon{}, &models.Payment{}, &models.Token{})
+	err := DB.AutoMigrate(&models.Organization{}, &models.User{}, &models.Campaign{}, &models.Customer{}, &models.Question{}, &models.Response{}, &models.Coupon{}, &models.Payment{}, &models.Token{}, &models.Transaction{}, &models.Balance{})
 	if err != nil {
 		log.Fatal("Migration failed:", err)
 	}

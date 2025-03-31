@@ -25,6 +25,12 @@ func main() {
 	orgRepo := repository.NewOrganizationRepoPG(db)
 	orgService := services.NewOrganisationService(orgRepo)
 
+	balanceRepo := repository.NewBalanceRepoPG(db)
+	balanceService := services.NewBalanceService(balanceRepo)
+
+	transactionRepo := repository.NewTransactionRepoPG(db)
+	transactionService := services.NewTransactionService(transactionRepo)
+
 	userRepo := repository.NewUserRepoPG(db)
 	userService := services.NewUserService(userRepo)
 
@@ -43,7 +49,7 @@ func main() {
 	paymentRepo := repository.NewPaymentRepoPG(db)
 	paymentService := services.NewPaymentService(paymentRepo)
 
-	server := handlers.NewServer(db, orgService, userService, campaignService, customerService, questionService, responseService, paymentService)
+	server := handlers.NewServer(db, balanceService, transactionService, orgService, userService, campaignService, customerService, questionService, responseService, paymentService)
 
 	app := fiber.New()
 

@@ -329,3 +329,86 @@ func VerifyFlutterwaveTransaction(transactionID int) (bool, error) {
 	}
 	return false, fmt.Errorf("transaction not successful")
 }
+
+// AirtimeRequest represents the structure for the Flutterwave airtime API call
+type AirtimeRequest struct {
+	Country     string  `json:"country"`
+	CustomerID  string  `json:"customer_id"`
+	Amount      float64 `json:"amount"`
+	Reference   string  `json:"reference"`
+	CallbackURL string  `json:"callback_url"`
+}
+
+type AirtimeResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		PhoneNumber   string  `json:"phone_number"`
+		Amount        float64 `json:"amount"`
+		Network       string  `json:"network"`
+		Code          string  `json:"code"`
+		TxRef         string  `json:"tx_ref"`
+		Reference     string  `json:"reference"`
+		BatchRef      string  `json:"batch_reference"`
+		RechargeToken string  `json:"recharge_token"`
+		Fee           float64 `json:"fee"`
+	} `json:"data"`
+}
+
+// sendAirtime triggers the Flutterwave bill payment API to send airtime
+func SendAirtime(phone string, amount float64) (*AirtimeResponse, error) {
+	url := "https://api.flutterwave.com/v3/billers/BIL099/items/AT099/payment"
+	token := os.Getenv("FLW_SECRET_KEY") // Ensure this is set in your .env file
+
+	requestBody := AirtimeRequest{
+		Country:     "NG",
+		CustomerID:  phone,
+		Amount:      amount,
+		Reference:   fmt.Sprintf("%d", time.Now().Unix()), // Generate a unique reference
+		CallbackURL: "https://your-callback-url.com",
+	}
+
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			// Handle error
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to send airtime: status %d", resp.StatusCode)
+	}
+
+	// Parse the response body into AirtimeResponse struct
+	var airtimeResponse AirtimeResponse
+	err = json.NewDecoder(resp.Body).Decode(&airtimeResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse response: %v", err)
+	}
+
+	// Check if the response status is not success
+	if airtimeResponse.Status != "success" {
+		return nil, fmt.Errorf("airtime transaction failed: %s", airtimeResponse.Message)
+	}
+
+	// Return the parsed response data
+	return &airtimeResponse, nil
+}

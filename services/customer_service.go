@@ -41,10 +41,10 @@ func (s *CustomerService) CreateCustomer(ctx context.Context, req api.Customer) 
 	return mapToAPICustomer(customer), nil
 }
 
-func (s *CustomerService) GetAllCustomers(ctx context.Context, limit, offset int) ([]api.Customer, error) {
-	customers, _, err := s.customerRepo.GetAll(limit, offset)
+func (s *CustomerService) GetAllCustomers(ctx context.Context, limit, offset int) ([]api.Customer, int64, error) {
+	customers, count, err := s.customerRepo.GetAll(limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
 
 	var finalCustomers []api.Customer
@@ -52,7 +52,7 @@ func (s *CustomerService) GetAllCustomers(ctx context.Context, limit, offset int
 		finalCustomers = append(finalCustomers, *mapToAPICustomer(&customer))
 	}
 
-	return finalCustomers, nil
+	return finalCustomers, count, nil
 }
 
 func (s *CustomerService) GetCustomerByID(ctx context.Context, id uuid.UUID) (*api.Customer, error) {
@@ -64,10 +64,10 @@ func (s *CustomerService) GetCustomerByID(ctx context.Context, id uuid.UUID) (*a
 	return mapToAPICustomer(customer), nil
 }
 
-func (s *CustomerService) GetCustomersByOrganization(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]api.Customer, error) {
-	customers, _, err := s.customerRepo.GetAllByOrganization(orgID, limit, offset)
+func (s *CustomerService) GetCustomersByOrganization(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]api.Customer, int64, error) {
+	customers, count, err := s.customerRepo.GetAllByOrganization(orgID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
 
 	var finalCustomers []api.Customer
@@ -75,7 +75,7 @@ func (s *CustomerService) GetCustomersByOrganization(ctx context.Context, orgID 
 		finalCustomers = append(finalCustomers, *mapToAPICustomer(&customer))
 	}
 
-	return finalCustomers, nil
+	return finalCustomers, count, nil
 }
 
 func (s *CustomerService) UpdateCustomer(ctx context.Context, id uuid.UUID, req *api.Customer) (*api.Customer, error) {

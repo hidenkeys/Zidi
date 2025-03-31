@@ -601,9 +601,15 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Customer'
+                type: object
+                properties:
+                    total:
+                      type: integer
+                      description: Total number of customers in the database.
+                    customers:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Customer'
 
   /customers/organization:
       get:
@@ -640,9 +646,15 @@ paths:
             content:
               application/json:
                 schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Customer'
+                  type: object
+                  properties:
+                    total:
+                      type: integer
+                      description: Total number of customers for the organization.
+                    customers:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Customer'
           '400':
             description: Missing or invalid organizationId
           '404':
@@ -1079,9 +1091,15 @@ paths:
                   total:
                     type: integer
                   payments:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Payment"
+                    type: object
+                    properties:
+                        total:
+                          type: integer
+                          description: Total number of payments in the database.
+                        payments:
+                          type: array
+                          items:
+                            $ref: "#/components/schemas/Payment"
         '500':
           description: Internal server error
 
@@ -1248,6 +1266,224 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/Response'
+  /transactions:
+    get:
+      summary: Get all transactions
+      operationId: listTransactions
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+          description: Number of transactions to return per page.
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of transactions to skip for pagination.
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                    totalCount:
+                      type: integer
+                      description: Total number of transactions in the database.
+                    transactions:
+                      type: array
+                      items:
+                        $ref: "#/components/schemas/Transaction"
+
+    post:
+      summary: Create a new transaction
+      operationId: createTransaction
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionInput"
+      responses:
+        "201":
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /transactions/{transactionId}:
+      get:
+        summary: Get a transaction by ID
+        operationId: getTransaction
+        security:
+          - BearerAuth: [ ]
+        parameters:
+          - name: transactionId
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          "200":
+            description: Transaction details
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Transaction"
+
+      patch:
+        summary: Update transaction status
+        operationId: updateTransactionStatus
+        security:
+          - BearerAuth: [ ]
+        parameters:
+          - name: transactionId
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionStatusUpdate"
+        responses:
+          "200":
+            description: Transaction status updated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Transaction"
+  /balances:
+    get:
+      summary: Get all balances
+      operationId: getAllBalances
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: List of balances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Balance"
+        "401":
+          description: Unauthorized
+
+    post:
+      summary: Create a new balance
+      operationId: createBalance
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBalanceRequest"
+      responses:
+        "201":
+          description: Balance created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+
+  /balances/{campaignId}:
+      get:
+        summary: Get balance by campaign
+        operationId: getBalanceByCampaign
+        security:
+          - BearerAuth: [ ]
+        parameters:
+          - name: campaignId
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        responses:
+          "200":
+            description: Balance retrieved successfully
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Balance"
+          "401":
+            description: Unauthorized
+          "404":
+            description: Balance not found
+
+      patch:
+        summary: Update balance by campaign
+        operationId: updateBalance
+        security:
+          - BearerAuth: [ ]
+        parameters:
+          - name: campaignId
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateBalanceRequest"
+        responses:
+          "200":
+            description: Balance updated successfully
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Balance"
+          "400":
+            description: Bad request
+          "401":
+            description: Unauthorized
+          "404":
+            description: Balance not found
+          "500":
+            description: Internal server error
 
 
 
@@ -1413,6 +1649,147 @@ components:
           type: string
           enum: [ pending, completed, failed ]
           example: "pending"
+    Transaction:
+      type: object
+      required:
+        - id
+        - organizationId
+        - campaignId
+        - customerId
+        - amount
+        - status
+        - phoneNumber
+        - network
+        - txReference
+        - type
+        - reference
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        campaignId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [ "pending", "success", "failed" ]
+        type:
+          type: string
+          enum: [ "airtime" ]
+        reference:
+          type: string
+        phoneNumber:
+          type: string
+        txReference:
+          type: string
+        network:
+          type: string
+
+    TransactionInput:
+        type: object
+        required:
+          - organizationId
+          - campaignId
+          - customerId
+          - amount
+          - phoneNumber
+          - network
+          - txReference
+          - type
+          - status
+          - reference
+        properties:
+          organizationId:
+            type: string
+            format: uuid
+          campaignId:
+            type: string
+            format: uuid
+          customerId:
+            type: string
+            format: uuid
+          amount:
+            type: number
+            format: float
+          type:
+            type: string
+            enum: [ "airtime"]
+          status:
+            type: string
+            enum: [ "pending", "success", "failed" ]
+          reference:
+            type: string
+          phoneNumber:
+            type: string
+          txReference:
+            type: string
+          network:
+            type: string
+
+    TransactionStatusUpdate:
+        type: object
+        required:
+          - status
+        properties:
+          status:
+            type: string
+            enum: [ "pending", "successful", "failed" ]
+
+    Balance:
+      type: object
+      required:
+        - id
+        - campaignId
+        - startingBalance
+        - amount
+      properties:
+        id:
+          type: string
+          format: uuid
+        campaignId:
+          type: string
+          format: uuid
+        startingBalance:
+          type: number
+          format: float
+        amount:
+          type: number
+          format: float
+
+    CreateBalanceRequest:
+        type: object
+        required:
+          - campaignId
+          - startingBalance
+          - amount
+        properties:
+          campaignId:
+            type: string
+            format: uuid
+          startingBalance:
+            type: number
+            format: float
+          amount:
+            type: number
+            format: float
+
+    UpdateBalanceRequest:
+        type: object
+        required:
+          - amount
+        properties:
+          amount:
+            type: number
+            format: float
 
     LoginRequest:
       type: object
