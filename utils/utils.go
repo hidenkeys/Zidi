@@ -358,8 +358,8 @@ type AirtimeResponse struct {
 // sendAirtime triggers the Flutterwave bill payment API to send airtime
 func SendAirtime(phone string, amount float64) (*AirtimeResponse, error) {
 	url := "https://api.flutterwave.com/v3/billers/BIL099/items/AT099/payment"
-	//token := os.Getenv("FLW_SECRET_KEY") // Ensure this is set in your .env file
-	token := "FLWSECK_TEST-3a7151242f92124e4ef117e6e4c5144d-X"
+	token := os.Getenv("FLW_SECRET_KEY") // Ensure this is set in your .env file
+
 	requestBody := AirtimeRequest{
 		Country:     "NG",
 		CustomerID:  phone,
