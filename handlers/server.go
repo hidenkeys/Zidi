@@ -82,10 +82,6 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	// Read request body
 	body := c.Body()
 
-	// Convert body to a string and log it
-	bodyStr := string(body)
-	fmt.Printf("Request Body as Text: %s\n", bodyStr)
-
 	// Verify request signature
 	signature := c.Get("verif-hash")
 	secretHash := os.Getenv("FLW_SECRET_HASH") // Ensure this is set in your .env file
@@ -102,24 +98,20 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	// Log received webhook for debugging
 	fmt.Printf("Received Flutterwave Webhook: %+v\n", payload)
 
-	fmt.Println("1")
 	// Verify transaction ID
 	transactionID := strconv.Itoa(payload.Data.ID)
 	if transactionID == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid transaction ID"})
 	}
 
-	fmt.Println("2")
 	// Verify transaction via Flutterwave API
 	isVerified, err := utils.VerifyFlutterwaveTransaction(payload.Data.ID)
 	if err != nil || !isVerified {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Transaction verification failed"})
 	}
 
-	fmt.Println("3")
 	// Extract campaign ID from metadata
 	campaignIDStr := payload.Meta.CampaignID
-	fmt.Println("campaig id", campaignIDStr)
 	if campaignIDStr == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Missing campaign ID"})
 	}
@@ -136,11 +128,6 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "Campaign not found"})
 	}
-
-	fmt.Println("4")
-
-	fmt.Println("payload amount ", payload.Data.Amount)
-	fmt.Println("campaig amunt", campaign.Price)
 
 	if payload.Data.Status == "successful" && float32(payload.Data.Amount) == campaign.Price {
 		fmt.Printf("Transaction %s verified. Processing payment...\n", transactionID)
