@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/api"
@@ -54,7 +55,7 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, req api.Campaign) 
 		Amount:         float64(req.Amount),
 		Price:          float64(req.Price),
 		Status:         req.Status,
-		CreatedAt:      *req.CreatedAt,
+		CreatedAt:      time.Now(),
 	}
 
 	campaign, err := s.campaignRepo.Create(newCampaign)
