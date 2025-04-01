@@ -98,18 +98,21 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	// Log received webhook for debugging
 	fmt.Printf("Received Flutterwave Webhook: %+v\n", payload)
 
+	fmt.Println("1")
 	// Verify transaction ID
 	transactionID := strconv.Itoa(payload.Data.ID)
 	if transactionID == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid transaction ID"})
 	}
 
+	fmt.Println("2")
 	// Verify transaction via Flutterwave API
 	isVerified, err := utils.VerifyFlutterwaveTransaction(payload.Data.ID)
 	if err != nil || !isVerified {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Transaction verification failed"})
 	}
 
+	fmt.Println("3")
 	// Extract campaign ID from metadata
 	campaignIDStr := payload.Meta.CampaignID
 	if campaignIDStr == "" {
@@ -129,15 +132,22 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "Campaign not found"})
 	}
 
+	fmt.Println("4")
+
+	fmt.Println("payload amount ", payload.Data.Amount)
+	fmt.Println("campaig amunt", campaign.Price)
+
 	if payload.Data.Status == "successful" && float32(payload.Data.Amount) == campaign.Price {
 		fmt.Printf("Transaction %s verified. Processing payment...\n", transactionID)
 
+		fmt.Println("5")
 		// Extract metadata from webhook
 		//meta, ok := payload.Data.Meta.(map[string]interface{})
 		//if !ok {
 		//	return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid metadata format"})
 		//}
 		// Create balance record
+
 		balance := api.Balance{
 			CampaignId:      campaignID,
 			StartingBalance: float32(payload.Data.Amount),
