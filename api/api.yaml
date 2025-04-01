@@ -601,15 +601,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                    total:
-                      type: integer
-                      description: Total number of customers in the database.
-                    customers:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/Customer'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
 
   /customers/organization:
       get:
@@ -646,15 +640,9 @@ paths:
             content:
               application/json:
                 schema:
-                  type: object
-                  properties:
-                    total:
-                      type: integer
-                      description: Total number of customers for the organization.
-                    customers:
-                      type: array
-                      items:
-                        $ref: '#/components/schemas/Customer'
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Customer'
           '400':
             description: Missing or invalid organizationId
           '404':
@@ -765,11 +753,16 @@ paths:
             content:
               application/json:
                 schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Campaign'
-          '400':
-            description: Missing or invalid organizationId
+                  type: object
+                  properties:
+                      count:
+                        type: integer
+                        description: Total number of campaigns for the specified organization
+                        example: 50
+                      campaigns:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Campaign"
           '404':
             description: No campaigns found for this organization
 
@@ -1580,6 +1573,11 @@ components:
           type: string
           format: uuid
           example: "d63e4c28-f8d2-4c39-b3bb-92cd5b998a21"
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-03-04T12:34:56Z"
     User:
       type: object
       required:

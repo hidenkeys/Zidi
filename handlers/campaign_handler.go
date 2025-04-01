@@ -76,14 +76,18 @@ func (s Server) GetAllCampaigns(c *fiber.Ctx, params api.GetAllCampaignsParams) 
 	if params.Offset != nil {
 		offset = *params.Offset
 	}
-	response, err := s.campaignService.GetAllCampaigns(context.Background(), limit, offset)
+	response, count, err := s.campaignService.GetAllCampaigns(context.Background(), limit, offset)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
 			Message:   err.Error(),
 		})
 	}
-	return c.Status(http.StatusOK).JSON(response)
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "success",
+		"data":    response,
+		"count":   count,
+	})
 }
 
 func (s Server) CreateCampaign(c *fiber.Ctx) error {
@@ -123,14 +127,18 @@ func (s Server) GetCampaignsByOrganization(c *fiber.Ctx, params api.GetCampaigns
 		offset = *params.Offset
 	}
 
-	response, err := s.campaignService.GetCampaignsByOrganization(context.Background(), params.OrganizationId, limit, offset)
+	response, count, err := s.campaignService.GetCampaignsByOrganization(context.Background(), params.OrganizationId, limit, offset)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",
 			Message:   err.Error(),
 		})
 	}
-	return c.Status(http.StatusOK).JSON(response)
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "success",
+		"data":    response,
+		"count":   count,
+	})
 }
 
 func (s Server) GetCouponsByCampaign(c *fiber.Ctx, id openapi_types.UUID) error {

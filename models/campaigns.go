@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"time"
 )
 
 type Campaign struct {
@@ -19,6 +20,7 @@ type Campaign struct {
 	Amount         float64
 	Price          float64
 	Status         string
+	CreatedAt      time.Time
 
 	// Relations
 	Questions []Question `gorm:"foreignKey:CampaignID"`

@@ -54,6 +54,7 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, req api.Campaign) 
 		Amount:         float64(req.Amount),
 		Price:          float64(req.Price),
 		Status:         req.Status,
+		CreatedAt:      *req.CreatedAt,
 	}
 
 	campaign, err := s.campaignRepo.Create(newCampaign)
@@ -64,10 +65,10 @@ func (s *CampaignService) CreateCampaign(ctx context.Context, req api.Campaign) 
 	return mapToAPICampaign(campaign), nil
 }
 
-func (s *CampaignService) GetAllCampaigns(ctx context.Context, limit, offset int) ([]api.Campaign, error) {
-	campaigns, _, err := s.campaignRepo.GetAll(limit, offset)
+func (s *CampaignService) GetAllCampaigns(ctx context.Context, limit, offset int) ([]api.Campaign, int64, error) {
+	campaigns, count, err := s.campaignRepo.GetAll(limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
 
 	var finalCampaigns []api.Campaign
@@ -75,7 +76,7 @@ func (s *CampaignService) GetAllCampaigns(ctx context.Context, limit, offset int
 		finalCampaigns = append(finalCampaigns, *mapToAPICampaign(&campaign))
 	}
 
-	return finalCampaigns, nil
+	return finalCampaigns, count, nil
 }
 
 func (s *CampaignService) GetAllCoupons(ctx context.Context, campaignId uuid.UUID) ([]api.Coupon, error) {
@@ -97,10 +98,10 @@ func (s *CampaignService) GetAllCoupons(ctx context.Context, campaignId uuid.UUI
 	return finalCoupons, nil
 }
 
-func (s *CampaignService) GetCampaignsByOrganization(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]api.Campaign, error) {
-	campaigns, _, err := s.campaignRepo.GetAllByOrganization(orgID, limit, offset)
+func (s *CampaignService) GetCampaignsByOrganization(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]api.Campaign, int64, error) {
+	campaigns, count, err := s.campaignRepo.GetAllByOrganization(orgID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
 
 	var finalCampaigns []api.Campaign
@@ -108,7 +109,7 @@ func (s *CampaignService) GetCampaignsByOrganization(ctx context.Context, orgID 
 		finalCampaigns = append(finalCampaigns, *mapToAPICampaign(&campaign))
 	}
 
-	return finalCampaigns, nil
+	return finalCampaigns, count, nil
 }
 
 func (s *CampaignService) GetCampaignByID(ctx context.Context, id uuid.UUID) (*api.Campaign, error) {
@@ -133,6 +134,7 @@ func (s *CampaignService) UpdateCampaign(ctx context.Context, id uuid.UUID, req 
 		Amount:         float64(req.Amount),
 		Price:          float64(req.Price),
 		Status:         req.Status,
+		CreatedAt:      *req.CreatedAt,
 	}
 
 	updatedCampaign, err := s.campaignRepo.UpdateByID(id, updateData)
@@ -162,5 +164,6 @@ func mapToAPICampaign(campaign *models.Campaign) *api.Campaign {
 		Amount:         float32(campaign.Amount),
 		Price:          float32(campaign.Price),
 		Status:         campaign.Status,
+		CreatedAt:      &campaign.CreatedAt,
 	}
 }
