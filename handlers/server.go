@@ -82,11 +82,13 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	// Read request body
 	body := c.Body()
 
+	// Convert body to a string and log it
+	bodyStr := string(body)
+	fmt.Printf("Request Body as Text: %s\n", bodyStr)
+
 	// Verify request signature
 	signature := c.Get("verif-hash")
 	secretHash := os.Getenv("FLW_SECRET_HASH") // Ensure this is set in your .env file
-
-	fmt.Println("body", body)
 
 	if signature != secretHash {
 		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid signature"})
