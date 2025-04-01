@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/hidenkeys/zidibackend/api"
 	"github.com/hidenkeys/zidibackend/utils"
@@ -192,6 +193,8 @@ func (s Server) UpdateCampaign(c *fiber.Ctx, id openapi_types.UUID) error {
 				Message:   err.Error(),
 			})
 		}
+		fmt.Println("campaign id", id.String())
+		fmt.Println("organizationID", campaign.OrganizationId.String())
 
 		tmp := payment{
 			Name:         response.ContactPersonName,

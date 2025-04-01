@@ -86,6 +86,8 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	signature := c.Get("verif-hash")
 	secretHash := os.Getenv("FLW_SECRET_HASH") // Ensure this is set in your .env file
 
+	fmt.Println("body", body)
+
 	if signature != secretHash {
 		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid signature"})
 	}
@@ -115,6 +117,7 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 	fmt.Println("3")
 	// Extract campaign ID from metadata
 	campaignIDStr := payload.Meta.CampaignID
+	fmt.Println("campaig id", campaignIDStr)
 	if campaignIDStr == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Missing campaign ID"})
 	}
