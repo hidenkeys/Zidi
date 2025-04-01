@@ -23,13 +23,13 @@ func (r *BalanceRepoPG) CreateBalance(balance *models.Balance) (*models.Balance,
 	return balance, nil
 }
 
-func (r *BalanceRepoPG) GetBalanceByCampaign(campaignId uuid.UUID) ([]models.Balance, error) {
-	var balances []models.Balance
-	err := r.db.Where("campaign_id = ?", campaignId).Find(&balances).Error
+func (r *BalanceRepoPG) GetBalanceByCampaign(campaignId uuid.UUID) (*models.Balance, error) {
+	var balance models.Balance
+	err := r.db.Where("campaign_id = ?", campaignId).First(&balance).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
-	return balances, err
+	return &balance, err
 }
 
 func (r *BalanceRepoPG) UpdateBalance(campaignId uuid.UUID, balance *models.Balance) (*models.Balance, error) {
@@ -41,8 +41,8 @@ func (r *BalanceRepoPG) UpdateBalance(campaignId uuid.UUID, balance *models.Bala
 	return balance, nil
 }
 
-func (r *BalanceRepoPG) GetAllBalances() ([]models.Balance, error) {
+func (r *BalanceRepoPG) GetAllBalances(limit, offset int) ([]models.Balance, error) {
 	var balances []models.Balance
-	err := r.db.Find(&balances).Error
+	err := r.db.Limit(limit).Offset(offset).Find(&balances).Error
 	return balances, err
 }

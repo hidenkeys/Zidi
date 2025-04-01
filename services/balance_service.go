@@ -24,7 +24,7 @@ func (s *BalanceService) CreateBalance(ctx context.Context, req *api.Balance) (*
 		Amount:          float64(req.Amount),
 	}
 
-	createdBalance, err := s.balanceRepo.Create(newBalance)
+	createdBalance, err := s.balanceRepo.CreateBalance(newBalance)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (s *BalanceService) CreateBalance(ctx context.Context, req *api.Balance) (*
 }
 
 func (s *BalanceService) GetBalanceByCampaign(ctx context.Context, campaignId uuid.UUID) (*api.Balance, error) {
-	balance, err := s.balanceRepo.GetByCampaignID(campaignId)
+	balance, err := s.balanceRepo.GetBalanceByCampaign(campaignId)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (s *BalanceService) GetBalanceByCampaign(ctx context.Context, campaignId uu
 }
 
 func (s *BalanceService) GetAllBalances(ctx context.Context, limit, offset int) ([]api.Balance, error) {
-	balances, err := s.balanceRepo.GetAll(limit, offset)
+	balances, err := s.balanceRepo.GetAllBalances(limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (s *BalanceService) GetAllBalances(ctx context.Context, limit, offset int) 
 }
 
 func (s *BalanceService) UpdateBalance(ctx context.Context, campaignId uuid.UUID, amount float64) (*api.Balance, error) {
-	updatedBalance, err := s.balanceRepo.UpdateByCampaignID(campaignId, &models.Balance{Amount: amount})
+	updatedBalance, err := s.balanceRepo.UpdateBalance(campaignId, &models.Balance{Amount: amount})
 	if err != nil {
 		return nil, err
 	}
