@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/hidenkeys/zidibackend/api"
+	"github.com/hidenkeys/zidibackend/middleware"
 	"github.com/hidenkeys/zidibackend/utils"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"html/template"
@@ -67,6 +68,20 @@ func (s Server) GenerateTokens(c *fiber.Ctx, id openapi_types.UUID) error {
 }
 
 func (s Server) GetAllCampaigns(c *fiber.Ctx, params api.GetAllCampaignsParams) error {
+	userClaims, ok := c.Locals("user").(middleware.UserClaims)
+	if !ok {
+		return c.Status(http.StatusUnauthorized).JSON(api.Error{
+			ErrorCode: "401",
+			Message:   "Unauthorized - Invalid token",
+		})
+	}
+
+	if userClaims.Role != "zidi" {
+		return c.Status(http.StatusUnauthorized).JSON(api.Error{
+			ErrorCode: "401",
+			Message:   "Unauthorized - Invalid token",
+		})
+	}
 	limit := 10
 	offset := 0
 
