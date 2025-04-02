@@ -123,6 +123,13 @@ func (s *CampaignService) GetCampaignByID(ctx context.Context, id uuid.UUID) (*a
 }
 
 func (s *CampaignService) UpdateCampaign(ctx context.Context, id uuid.UUID, req *api.Campaign) (*api.Campaign, error) {
+	var createdAt time.Time
+	if req.CreatedAt != nil {
+		createdAt = *req.CreatedAt
+	} else {
+		createdAt = time.Now() // or some default value
+	}
+
 	updateData := &models.Campaign{
 		CampaignName:   req.CampaignName,
 		CouponID:       req.CouponId,
@@ -135,7 +142,7 @@ func (s *CampaignService) UpdateCampaign(ctx context.Context, id uuid.UUID, req 
 		Amount:         float64(req.Amount),
 		Price:          float64(req.Price),
 		Status:         req.Status,
-		CreatedAt:      *req.CreatedAt,
+		CreatedAt:      createdAt,
 	}
 
 	updatedCampaign, err := s.campaignRepo.UpdateByID(id, updateData)
