@@ -64,7 +64,15 @@ func (s Server) GetBalanceByCampaign(c *fiber.Ctx, campaignId openapi_types.UUID
 			Message:   "Balance not found",
 		})
 	}
-	return c.Status(http.StatusOK).JSON(balance)
+
+	response, err := s.campaignService.GetCampaignByID(context.Background(), uuid.UUID(campaignId))
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(api.Error{
+			ErrorCode: "500",
+			Message:   err.Error(),
+		})
+	}
+	return c.Status(http.StatusOK).JSON(balance, response.CampaignName)
 }
 
 func (s Server) UpdateBalance(c *fiber.Ctx, campaignId openapi_types.UUID) error {
