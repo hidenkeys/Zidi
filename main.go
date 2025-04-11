@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/hidenkeys/zidibackend/api"
 	"github.com/hidenkeys/zidibackend/config"
 	"github.com/hidenkeys/zidibackend/handlers"
@@ -52,7 +53,7 @@ func main() {
 	server := handlers.NewServer(db, balanceService, transactionService, orgService, userService, campaignService, customerService, questionService, responseService, paymentService)
 
 	app := fiber.New()
-
+	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "http://localhost:3000, https://www.zidi-admin.vercel.app, https://zidi-admin.vercel.app, https://zidi-frontend.vercel.app, https://zidi-frontend.vercel.app/, https://216.198.79.65:3000, https://64.29.17.65:3000 ", // Allow your frontend origin
 		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",                                                                                                                                                                                     // Allow specific HTTP methods
