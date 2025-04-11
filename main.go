@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	//"github.com/hidenkeys/zidibackend/api"
+	"github.com/hidenkeys/zidibackend/api"
 	"github.com/hidenkeys/zidibackend/config"
 	"github.com/hidenkeys/zidibackend/handlers"
 	"github.com/hidenkeys/zidibackend/middleware"
@@ -69,12 +69,12 @@ func main() {
 	//adminAndUserAuth := middleware.AuthMiddleware(string(jwtSecret), )
 	go telegrambot.StartBot(db)
 
-	// api.RegisterHandlersWithOptions(app, server, api.FiberServerOptions{
-	// 	BaseURL:     "/api/v1",
-	// 	Middlewares: []api.MiddlewareFunc{
-	// 		userAuth,
-	// 	},
-	// })
+	api.RegisterHandlersWithOptions(app, server, api.FiberServerOptions{
+		BaseURL:     "/api/v1",
+		Middlewares: []api.MiddlewareFunc{
+			//userAuth,
+		},
+	})
 
 	server.SeedDefaultOrganization()
 	// And we serve HTTP until the world ends.
