@@ -59,9 +59,10 @@ func main() {
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",                                                                                                                                                                         // Allow custom headers
 	}))
 	userAuth := middleware.AuthMiddleware(db, string(jwtSecret), "user", "admin", "zidi")
-	app.Post("/api/v1/auth/login", server.LoginUser)
-	app.Post("/api/v1/flutterwave/webhook", server.PostFlutterwaveWebhook)
-	app.Use(userAuth)
+	//app.Post("/api/v1/auth/login", server.LoginUser)
+	//app.Post("/api/v1/flutterwave/webhook", server.PostFlutterwaveWebhook)
+	//app.Post("/api/v1/superuser/auth/login", server.SuperuserLogin)
+	//app.Use(userAuth)
 
 	//adminAuth := middleware.AuthMiddleware(string(jwtSecret), "admin")
 	//zidiAuth := middleware.AuthMiddleware(string(jwtSecret), "zidi")
@@ -69,12 +70,12 @@ func main() {
 	//adminAndUserAuth := middleware.AuthMiddleware(string(jwtSecret), )
 	go telegrambot.StartBot(db)
 
-	api.RegisterHandlersWithOptions(app, server, api.FiberServerOptions{
-		BaseURL:     "/api/v1",
-		Middlewares: []api.MiddlewareFunc{
-			//userAuth,
-		},
-	})
+	app.Post("/api/v1/auth/login", server.LoginUser)
+	app.Post("/api/v1/flutterwave/webhook", server.PostFlutterwaveWebhook)
+	app.Post("/api/v1/superuser/auth/login", server.SuperuserLogin)
+	newGroup := app.Group("/api/v1")
+	newGroup.Use(userAuth)
+	api.RegisterHandlers(newGroup, server)
 
 	server.SeedDefaultOrganization()
 	// And we serve HTTP until the world ends.
