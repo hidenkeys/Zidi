@@ -35,9 +35,10 @@ var sessions = make(map[int64]*Session)
 // StartBot initializes and runs the Telegram bot
 // StartBot initializes and runs the Telegram bot with a database connection
 func StartBot(db *gorm.DB) {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("❌ Error loading .env file")
-	}
+	// if err := godotenv.Load(); 
+	// err != nil {
+	// 	log.Fatal("❌ Error loading .env file")
+	// }
 
 	bot, err := tele.NewBot(tele.Settings{
 		Token:  os.Getenv("TELEGRAM_API_KEY"),
