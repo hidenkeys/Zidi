@@ -14,7 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/models"
-	"github.com/joho/godotenv"
+	//"github.com/joho/godotenv"
 	tele "gopkg.in/telebot.v3"
 	"gorm.io/gorm"
 )
