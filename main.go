@@ -72,7 +72,7 @@ func main() {
 	api.RegisterHandlersWithOptions(app, server, api.FiberServerOptions{
 		BaseURL:     "/api/v1",
 		Middlewares: []api.MiddlewareFunc{
-			//userAuth,
+			userAuth,
 		},
 	})
 
