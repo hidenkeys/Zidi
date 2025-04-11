@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/hidenkeys/zidibackend/api"
+	//"github.com/hidenkeys/zidibackend/api"
 	"github.com/hidenkeys/zidibackend/config"
 	"github.com/hidenkeys/zidibackend/handlers"
 	"github.com/hidenkeys/zidibackend/middleware"
