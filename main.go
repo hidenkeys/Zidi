@@ -55,9 +55,9 @@ func main() {
 	app := fiber.New()
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000, https://www.zidi-admin.vercel.app, https://zidi-admin.vercel.app, https://zidi-frontend.vercel.app, https://zidi-frontend.vercel.app/, https://216.198.79.65:3000, https://64.29.17.65:3000 ", // Allow your frontend origin
-		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",                                                                                                                                                                                     // Allow specific HTTP methods
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",                                                                                                                                                                         // Allow custom headers
+		AllowOrigins: "http://localhost:3000, https://www.zidi-admin.vercel.app, https://zidi-admin.vercel.app, https://zidi-frontend.vercel.app, https://zidi-frontend.vercel.app/, https://216.198.79.65:3000, https://64.29.17.65:3000, https://admin.zidihq.com, https://www.admin.zidihq.com, https://www.app.zidihq.com, https://app.zidihq.com, https://zidihq.com, https://www.zidihq.com",
+		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
 	userAuth := middleware.AuthMiddleware(db, string(jwtSecret), "user", "admin", "zidi")
 	//app.Post("/api/v1/auth/login", server.LoginUser)

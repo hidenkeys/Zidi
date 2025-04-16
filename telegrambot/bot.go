@@ -320,7 +320,7 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		}
 
 		// Transaction created successfully
-		log.Println("✅ Transaction created:", transaction.Reference)
+		log.Println("✅ Transaction created:", transaction.TxReference)
 
 		// Final success message
 		delete(sessions, userID)

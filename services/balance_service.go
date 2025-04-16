@@ -18,6 +18,20 @@ func NewBalanceService(balanceRepo repository.BalanceRepository) *BalanceService
 }
 
 func (s *BalanceService) CreateBalance(ctx context.Context, req *api.Balance) (*api.Balance, error) {
+	// Check if a balance already exists for this CampaignId
+	existingBalance, err := s.balanceRepo.GetBalanceByCampaign(req.CampaignId)
+	if err != nil {
+		return nil, err
+	}
+	if existingBalance != nil {
+		// Option 1: return the existing balance
+		return mapToAPIBalance(existingBalance), nil
+
+		// Option 2: return an error
+		// return nil, fmt.Errorf("balance already exists for campaign ID %s", req.CampaignId.String())
+	}
+
+	// Create a new balance since none exists
 	newBalance := &models.Balance{
 		CampaignId:      req.CampaignId,
 		StartingBalance: float64(req.StartingBalance),
