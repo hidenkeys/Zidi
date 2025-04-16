@@ -1660,7 +1660,7 @@ components:
         - network
         - txReference
         - type
-        - reference
+        - commisson
       properties:
         id:
           type: string
@@ -1683,8 +1683,9 @@ components:
         type:
           type: string
           enum: [ "airtime" ]
-        reference:
-          type: string
+        commisson:
+          type: number
+          format: float
         phoneNumber:
           type: string
         txReference:
