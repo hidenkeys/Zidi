@@ -105,7 +105,7 @@ func (s Server) SuperuserLogin(c *fiber.Ctx) error {
 		})
 	}
 
-	if user.Role != "superuser" {
+	if user.Role != "zidi" {
 		return c.Status(http.StatusUnauthorized).JSON(api.Error{
 			ErrorCode: "401",
 			Message:   "Insufficient privileges",

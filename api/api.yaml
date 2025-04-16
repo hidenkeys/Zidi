@@ -1704,7 +1704,7 @@ components:
           - txReference
           - type
           - status
-          - reference
+          - commisson
         properties:
           organizationId:
             type: string
@@ -1724,8 +1724,9 @@ components:
           status:
             type: string
             enum: [ "pending", "success", "failed" ]
-          reference:
-            type: string
+          commisson:
+            type: number
+            format: float
           phoneNumber:
             type: string
           txReference:

@@ -10,6 +10,8 @@ import (
 	"github.com/hidenkeys/zidibackend/utils"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,10 +37,9 @@ var sessions = make(map[int64]*Session)
 // StartBot initializes and runs the Telegram bot
 // StartBot initializes and runs the Telegram bot with a database connection
 func StartBot(db *gorm.DB) {
-	// if err := godotenv.Load(); 
-	// err != nil {
-	// 	log.Fatal("❌ Error loading .env file")
-	// }
+	//if err := godotenv.Load(); err != nil {
+	//	log.Fatal("❌ Error loading .env file")
+	//}
 
 	bot, err := tele.NewBot(tele.Settings{
 		Token:  os.Getenv("TELEGRAM_API_KEY"),
@@ -150,12 +151,32 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 	case 4:
 		session.Customer.Phone = c.Text()
 		session.Step++
-		return c.Send("📶 Which network provider do you use?")
+
+		networkKeyboard := &tele.ReplyMarkup{ResizeKeyboard: true}
+		btnMTN := networkKeyboard.Text("mt")
+		btnGlo := networkKeyboard.Text("glo")
+		btnAirtel := networkKeyboard.Text("airtel")
+		btnEtisalat := networkKeyboard.Text("etisalat")
+		networkKeyboard.Reply(networkKeyboard.Row(btnMTN, btnGlo), networkKeyboard.Row(btnAirtel, btnEtisalat))
+
+		return c.Send("📶 Which network provider do you use?", networkKeyboard)
 
 	case 5:
-		session.Customer.Network = c.Text()
+		network := strings.ToLower(c.Text())
+		validNetworks := map[string]bool{
+			"mtn":      true,
+			"glo":      true,
+			"airtel":   true,
+			"etisalat": true,
+		}
+
+		if !validNetworks[network] {
+			return c.Send("❌ Invalid network. Please select from the options provided.")
+		}
+
+		session.Customer.Network = strings.ToUpper(network) // optional: normalize
 		session.Step++
-		return c.Send("💬 Any feedback you'd like to share?")
+		return c.Send("💬 Any feedback you'd like to share?", &tele.ReplyMarkup{RemoveKeyboard: true})
 
 	case 6:
 		session.Customer.Feedback = c.Text()
@@ -260,23 +281,28 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 			return c.Send("❌ An error occurred while redeeming your coupon. Please try again later.")
 		}
 
-		airtimeRespose, err := utils.SendAirtime(session.Customer.Phone, session.Amount)
+		airtimeRespose, err := utils.SendAirtime(fmt.Sprintf("%.0f", session.Amount), session.Customer.Network, session.Customer.Phone)
 		if err != nil {
 			log.Println("❌ Error sending airtime:", err)
 			return c.Send("❌ An error occurred while sending your airtime. Please try again later.")
 		}
 
+		commissionFloat, err := strconv.ParseFloat(airtimeRespose.Commission, 32)
+		if err != nil {
+			fmt.Println("error converting commission:", err)
+			return nil
+		}
 		// Create a new transaction after sending airtime
 		transactionInput := &api.TransactionInput{
 			OrganizationId: session.OrganizationID,
 			CampaignId:     session.CampaignID,
 			CustomerId:     session.Customer.ID,
-			Network:        airtimeRespose.Data.Network,
-			PhoneNumber:    airtimeRespose.Data.PhoneNumber,
-			TxReference:    airtimeRespose.Data.TxRef,
-			Amount:         float32(session.Amount),
+			Network:        airtimeRespose.Network,
+			PhoneNumber:    airtimeRespose.Phone,
+			TxReference:    airtimeRespose.RequestID,
+			Amount:         float32(session.Amount), // Amount is already in float64
 			Type:           "airtime",
-			Reference:      airtimeRespose.Data.Reference,
+			Commisson:      float32(commissionFloat),
 		}
 
 		transactionRepo := repository.NewTransactionRepoPG(db)

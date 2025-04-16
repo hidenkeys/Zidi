@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
@@ -11,12 +12,16 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/models"
+	brevo "github.com/sendinblue/APIv3-go-library/v2/lib"
 	"gorm.io/gorm"
 	"io"
 	"log"
+	"net/smtp"
+
+	//"log"
 	"math/rand"
 	"net/http"
-	"net/smtp"
+	//"net/smtp"
 	"os"
 	"strings"
 	"time"
@@ -112,7 +117,7 @@ func CheckUserRole(c *fiber.Ctx, allowedRoles ...string) bool {
 }
 
 // function to send email
-func SendEmail(to, subject, body string) error {
+func SendEmail00(to, subject, body string) error {
 	from := "teniolasobande04@gmail.com"
 	password := "vndt vleo ccfc tcqt"
 
@@ -131,6 +136,35 @@ func SendEmail(to, subject, body string) error {
 		log.Fatalf("Error sending email: %v", err)
 	}
 	return nil
+}
+
+func SendEmail0(toEmail, subject, htmlBody string) error {
+	cfg := brevo.NewConfiguration()
+	cfg.AddDefaultHeader("api-key", os.Getenv("BREVO_API_KEY")) // Replace with your actual Brevo API key
+
+	client := brevo.NewAPIClient(cfg)
+
+	sender := brevo.SendSmtpEmailSender{
+		Name:  "zidi",
+		Email: "letimapro23@gmail.com", // Must be a verified sender in Brevo
+	}
+
+	to := []brevo.SendSmtpEmailTo{
+		{
+			Email: toEmail,
+		},
+	}
+
+	email := brevo.SendSmtpEmail{
+		Sender:      &sender,
+		To:          to,
+		Subject:     subject,
+		HtmlContent: htmlBody,
+	}
+
+	_, _, err := client.TransactionalEmailsApi.SendTransacEmail(context.Background(), email)
+	return err
+
 }
 
 // PaystackResponse holds the response from Paystack API
@@ -331,84 +365,188 @@ func VerifyFlutterwaveTransaction(transactionID int) (bool, error) {
 }
 
 // AirtimeRequest represents the structure for the Flutterwave airtime API call
+//type AirtimeRequest struct {
+//	Country     string  `json:"country"`
+//	CustomerID  string  `json:"customer_id"`
+//	Amount      float64 `json:"amount"`
+//	Reference   string  `json:"reference"`
+//	CallbackURL string  `json:"callback_url"`
+//}
+//
+//type AirtimeResponse struct {
+//	Status  string `json:"status"`
+//	Message string `json:"message"`
+//	Data    struct {
+//		PhoneNumber   string  `json:"phone_number"`
+//		Amount        float64 `json:"amount"`
+//		Network       string  `json:"network"`
+//		Code          string  `json:"code"`
+//		TxRef         string  `json:"tx_ref"`
+//		Reference     string  `json:"reference"`
+//		BatchRef      string  `json:"batch_reference"`
+//		RechargeToken string  `json:"recharge_token"`
+//		Fee           float64 `json:"fee"`
+//	} `json:"data"`
+//}
+//
+//// sendAirtime triggers the Flutterwave bill payment API to send airtime
+//func SendAirtime(phone string, amount float64) (*AirtimeResponse, error) {
+//	url := "https://api.flutterwave.com/v3/billers/BIL099/items/AT099/payment"
+//	token := "FLWSECK_TEST-53a7b2d986ad43c2e5a38b54aac94479-X" // Ensure this is set in your .env file
+//
+//	requestBody := AirtimeRequest{
+//		Country:     "NG",
+//		CustomerID:  phone,
+//		Amount:      amount,
+//		Reference:   fmt.Sprintf("%d", time.Now().Unix()), // Generate a unique reference
+//		CallbackURL: "https://your-callback-url.com",
+//	}
+//
+//	jsonData, err := json.Marshal(requestBody)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+//	if err != nil {
+//		return nil, err
+//	}
+//	req.Header.Set("Authorization", "Bearer "+token)
+//	req.Header.Set("Content-Type", "application/json")
+//	req.Header.Set("Accept", "application/json")
+//
+//	client := &http.Client{}
+//	resp, err := client.Do(req)
+//	if err != nil {
+//		return nil, err
+//	}
+//	defer func(Body io.ReadCloser) {
+//		err := Body.Close()
+//		if err != nil {
+//			// Handle error
+//		}
+//	}(resp.Body)
+//
+//	if resp.StatusCode != http.StatusOK {
+//		return nil, fmt.Errorf("failed to send airtime: status %d", resp.StatusCode, resp.Body)
+//	}
+//
+//	// Parse the response body into AirtimeResponse struct
+//	var airtimeResponse AirtimeResponse
+//	err = json.NewDecoder(resp.Body).Decode(&airtimeResponse)
+//	if err != nil {
+//		return nil, fmt.Errorf("failed to parse response: %v", err)
+//	}
+//
+//	// Check if the response status is not success
+//	if airtimeResponse.Status != "success" {
+//		return nil, fmt.Errorf("airtime transaction failed: %s", airtimeResponse.Message)
+//	}
+//
+//	// Return the parsed response data
+//	return &airtimeResponse, nil
+//}
+
 type AirtimeRequest struct {
-	Country     string  `json:"country"`
-	CustomerID  string  `json:"customer_id"`
-	Amount      float64 `json:"amount"`
-	Reference   string  `json:"reference"`
-	CallbackURL string  `json:"callback_url"`
+	RequestID     string `json:"request_id"`
+	ServiceID     string `json:"serviceID"`
+	VariationCode string `json:"variation_code"`
+	Amount        string `json:"amount"`
+	Phone         string `json:"phone"`
 }
 
-type AirtimeResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	Data    struct {
-		PhoneNumber   string  `json:"phone_number"`
-		Amount        float64 `json:"amount"`
-		Network       string  `json:"network"`
-		Code          string  `json:"code"`
-		TxRef         string  `json:"tx_ref"`
-		Reference     string  `json:"reference"`
-		BatchRef      string  `json:"batch_reference"`
-		RechargeToken string  `json:"recharge_token"`
-		Fee           float64 `json:"fee"`
-	} `json:"data"`
+type Transaction struct {
+	Status     string `json:"status"`
+	Amount     string `json:"amount"`
+	Network    string `json:"product_name"`
+	RequestID  string `json:"request_id"`
+	Phone      string `json:"phone"`
+	Commission string `json:"commission"`
 }
 
-// sendAirtime triggers the Flutterwave bill payment API to send airtime
-func SendAirtime(phone string, amount float64) (*AirtimeResponse, error) {
-	url := "https://api.flutterwave.com/v3/billers/BIL099/items/AT099/payment"
-	token := os.Getenv("FLW_SECRET_KEY") // Ensure this is set in your .env file
+type vtpassResponse struct {
+	Code                string      `json:"code"`
+	ResponseDescription string      `json:"response_description"`
+	RequestID           string      `json:"requestId"`
+	Amount              json.Number `json:"amount"`
+	TransactionDate     string      `json:"transaction_date"`
+	PurchasedCode       string      `json:"purchased_code"`
+	Content             struct {
+		Transactions struct {
+			Status            string      `json:"status"`
+			Product           string      `json:"product_name"`
+			Phone             string      `json:"phone"`
+			Amount            json.Number `json:"amount"`
+			Commission        float64     `json:"commission"`
+			CommissionDetails struct {
+				Amount          float64 `json:"amount"`
+				Rate            string  `json:"rate"`
+				RateType        string  `json:"rate_type"`
+				ComputationType string  `json:"computation_type"`
+			} `json:"commission_details"`
+		} `json:"transactions"`
+	} `json:"content"`
+}
 
-	requestBody := AirtimeRequest{
-		Country:     "NG",
-		CustomerID:  phone,
-		Amount:      amount,
-		Reference:   fmt.Sprintf("%d", time.Now().Unix()), // Generate a unique reference
-		CallbackURL: "https://your-callback-url.com",
+func SendAirtime(amount, network, phone string) (*Transaction, error) {
+	url := "https://vtpass.com/api/pay"
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	reqBody := AirtimeRequest{
+		RequestID:     fmt.Sprintf("%d", time.Now().UnixNano()),
+		ServiceID:     network,
+		VariationCode: "",
+		Amount:        amount,
+		Phone:         phone,
 	}
 
-	jsonData, err := json.Marshal(requestBody)
+	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("api-key", os.Getenv("VTPASS_API_KEY"))
+	req.Header.Set("secret-key", os.Getenv("VTPASS_API_SECRET_KEY"))
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			// Handle error
+
 		}
 	}(resp.Body)
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to send airtime: status %d", resp.StatusCode)
-	}
-
-	// Parse the response body into AirtimeResponse struct
-	var airtimeResponse AirtimeResponse
-	err = json.NewDecoder(resp.Body).Decode(&airtimeResponse)
+	// Read body once
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse response: %v", err)
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	// Check if the response status is not success
-	if airtimeResponse.Status != "success" {
-		return nil, fmt.Errorf("airtime transaction failed: %s", airtimeResponse.Message)
+	// Debug: print raw JSON response
+	fmt.Println("Raw response:", string(respBody))
+
+	// Unmarshal into struct
+	var vtResp vtpassResponse
+	if err := json.Unmarshal(respBody, &vtResp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	// Return the parsed response data
-	return &airtimeResponse, nil
+	// Return formatted transaction
+	return &Transaction{
+		Status:     vtResp.Content.Transactions.Status,
+		Amount:     vtResp.Amount.String(),
+		Network:    vtResp.Content.Transactions.Product,
+		RequestID:  vtResp.RequestID,
+		Phone:      vtResp.Content.Transactions.Phone,
+		Commission: fmt.Sprintf("%.2f", vtResp.Content.Transactions.Commission),
+	}, nil
 }

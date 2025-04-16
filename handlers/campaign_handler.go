@@ -238,7 +238,7 @@ func (s Server) UpdateCampaign(c *fiber.Ctx, id openapi_types.UUID) error {
 
 		createBody := tpl.String()
 
-		err = utils.SendEmail(string(response.Email), "Complete your "+campaign.CampaignName+" Campaign Payment", createBody)
+		err = utils.SendEmail0(string(response.Email), "Complete your "+campaign.CampaignName+" Campaign Payment", createBody)
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(api.Error{
 				ErrorCode: "500",

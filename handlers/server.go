@@ -202,7 +202,10 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 
 		tmpl, err := template.ParseFiles("Zidi-payment-successful-email-template.html")
 		if err != nil {
-			log.Fatalf("Error loading template: %v", err)
+			return c.Status(http.StatusInternalServerError).JSON(api.Error{
+				ErrorCode: "500",
+				Message:   "Template load error: " + err.Error(),
+			})
 		}
 
 		var tpl bytes.Buffer
@@ -212,7 +215,7 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 
 		createBody := tpl.String()
 
-		err = utils.SendEmail(string(response.Email), "Complete your "+campaign.CampaignName+" Campaign Payment", createBody)
+		err = utils.SendEmail0(string(response.Email), "Complete your "+campaign.CampaignName+" Campaign Payment", createBody)
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(api.Error{
 				ErrorCode: "500",

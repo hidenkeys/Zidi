@@ -17,5 +17,5 @@ type Transaction struct {
 	TxReference    string    `gorm:"not null"`
 	Status         string    `gorm:"type:varchar(50);not null"` // e.g., "pending", "successful", "failed"
 	Type           string    `gorm:"type:varchar(50);not null"` // e.g., "airtime", "data"
-	Reference      string    `gorm:"unique;not null"`
+	Commisson      float64   `gorm:"unique;not null"`
 }
