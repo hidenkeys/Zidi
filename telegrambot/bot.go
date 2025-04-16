@@ -1,12 +1,8 @@
 package telegrambot
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hidenkeys/zidibackend/api"
-	"github.com/hidenkeys/zidibackend/repository"
-	"github.com/hidenkeys/zidibackend/services"
 	"github.com/hidenkeys/zidibackend/utils"
 	"log"
 	"os"
@@ -292,35 +288,62 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 			fmt.Println("error converting commission:", err)
 			return nil
 		}
-		// Create a new transaction after sending airtime
-		transactionInput := &api.TransactionInput{
-			OrganizationId: session.OrganizationID,
-			CampaignId:     session.CampaignID,
-			CustomerId:     session.Customer.ID,
+		//// Create a new transaction after sending airtime
+		//transactionInput := &api.TransactionInput{
+		//	OrganizationId: session.OrganizationID,
+		//	CampaignId:     session.CampaignID,
+		//	CustomerId:     session.Customer.ID,
+		//	Network:        airtimeRespose.Network,
+		//	PhoneNumber:    airtimeRespose.Phone,
+		//	TxReference:    airtimeRespose.RequestID,
+		//	Amount:         float32(session.Amount), // Amount is already in float64
+		//	Type:           "airtime",
+		//	Commisson:      float32(commissionFloat),
+		//}
+
+		// Create transaction directly
+		tx := models.Transaction{
+			OrganizationID: session.OrganizationID,
+			CampaignID:     session.CampaignID,
+			CustomerID:     session.Customer.ID,
 			Network:        airtimeRespose.Network,
 			PhoneNumber:    airtimeRespose.Phone,
 			TxReference:    airtimeRespose.RequestID,
-			Amount:         float32(session.Amount), // Amount is already in float64
+			Amount:         session.Amount,
 			Type:           "airtime",
-			Commisson:      float32(commissionFloat),
+			Commisson:      commissionFloat,
 		}
 
-		transactionRepo := repository.NewTransactionRepoPG(db)
-		transactionService := services.NewTransactionService(transactionRepo) // assuming you have a repository
-		transaction, err := transactionService.CreateTransaction(context.Background(), transactionInput)
-		if err != nil {
-			log.Println("❌ Error creating transaction:", err)
+		if err := db.Create(&tx).Error; err != nil {
+			log.Println("❌ Error creating transaction directly:", err)
 			return c.Send("❌ An error occurred while processing your transaction. Please try again later.")
 		}
-		balanceRepo := repository.NewBalanceRepoPG(db)
-		balanceService := services.NewBalanceService(balanceRepo)
-		_, err = balanceService.UpdateBalance(context.Background(), session.CampaignID, session.Amount)
+
+		//transactionRepo := repository.NewTransactionRepoPG(db)
+		//transactionService := services.NewTransactionService(transactionRepo) // assuming you have a repository
+		//transaction, err := transactionService.CreateTransaction(context.Background(), transactionInput)
+		//if err != nil {
+		//	log.Println("❌ Error creating transaction:", err)
+		//	return c.Send("❌ An error occurred while processing your transaction. Please try again later.")
+		//}
+		//balanceRepo := repository.NewBalanceRepoPG(db)
+		//balanceService := services.NewBalanceService(balanceRepo)
+		//_, err = balanceService.UpdateBalance(context.Background(), session.CampaignID, session.Amount)
+		//if err != nil {
+		//	log.Println("❌ Error updating balance:", err)
+		//}
+
+		// Update balance directly
+		err = db.Model(&models.Balance{}).
+			Where("campaign_id = ?", session.CampaignID).
+			Update("amount", gorm.Expr("amount - ?", session.Amount)).Error
 		if err != nil {
-			log.Println("❌ Error updating balance:", err)
+			log.Println("❌ Error updating balance directly:", err)
+			// Not returning here, but you can return if it's critical
 		}
 
 		// Transaction created successfully
-		log.Println("✅ Transaction created:", transaction.TxReference)
+		log.Println("✅ Transaction created:", tx.TxReference)
 
 		// Final success message
 		delete(sessions, userID)
