@@ -153,7 +153,7 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		session.Step++
 
 		networkKeyboard := &tele.ReplyMarkup{ResizeKeyboard: true}
-		btnMTN := networkKeyboard.Text("mt")
+		btnMTN := networkKeyboard.Text("mtn")
 		btnGlo := networkKeyboard.Text("glo")
 		btnAirtel := networkKeyboard.Text("airtel")
 		btnEtisalat := networkKeyboard.Text("etisalat")
