@@ -209,7 +209,7 @@ func (s Server) UpdateCampaign(c *fiber.Ctx, id openapi_types.UUID) error {
 		}
 
 		// Generate Flutterwave payment link
-		paymentLink, err := utils.CreateFlutterwavePaymentLink(string(response.Email), int(campaign.Price), id.String(), campaign.OrganizationId.String())
+		paymentLink, err := utils.CreatePaystackPaymentLink(string(response.Email), int(campaign.Price), id.String(), campaign.OrganizationId.String())
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(api.Error{
 				ErrorCode: "500",
