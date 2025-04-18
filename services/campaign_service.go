@@ -144,12 +144,10 @@ func (s *CampaignService) UpdateCampaign(ctx context.Context, id uuid.UUID, req 
 		Status:         req.Status,
 		CreatedAt:      createdAt,
 	}
-
 	updatedCampaign, err := s.campaignRepo.UpdateByID(id, updateData)
 	if err != nil {
 		return nil, err
 	}
-
 	return mapToAPICampaign(updatedCampaign), nil
 }
 

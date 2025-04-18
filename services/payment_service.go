@@ -91,6 +91,15 @@ func (s *PaymentService) UpdatePayment(ctx context.Context, id uuid.UUID, req *a
 	return mapToAPIPayment(updatedPayment), nil
 }
 
+func (s *PaymentService) GetPaymentByTransactionRef(ctx context.Context, ref string) (*api.Payment, error) {
+	payment, err := s.paymentRepo.GetByTransactionRef(ref)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapToAPIPayment(payment), nil
+}
+
 // Helper function to convert models.Payment to api.Payment
 func mapToAPIPayment(payment *models.Payment) *api.Payment {
 	return &api.Payment{

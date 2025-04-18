@@ -11,4 +11,5 @@ type PaymentRepository interface {
 	GetAllByOrganization(orgID uuid.UUID, limit, offset int) ([]models.Payment, int64, error)
 	GetByID(id uuid.UUID) (*models.Payment, error)
 	UpdateByID(id uuid.UUID, campaign *models.Payment) (*models.Payment, error)
+	GetByTransactionRef(ref string) (*models.Payment, error)
 }

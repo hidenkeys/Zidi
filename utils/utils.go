@@ -16,7 +16,6 @@ import (
 	"gorm.io/gorm"
 	"io"
 	"log"
-	"net"
 	"net/smtp"
 
 	//"log"
@@ -174,21 +173,19 @@ var paystackIPWhitelist = []string{
 	"52.49.173.169",
 	"52.214.14.220",
 }
+var paystackIPs = []string{
+	"52.31.139.75",
+	"52.49.173.169",
+	"52.214.14.220",
+}
 
 // IsPaystackIPWhitelisted checks if the request IP is in the known Paystack IPs
-func IsPaystackIPWhitelisted(ip string) bool {
-	ip = strings.TrimSpace(ip)
-
-	for _, whitelistedIP := range paystackIPWhitelist {
-		if ip == whitelistedIP {
-			return true
-		}
-		// In case IPs are coming in CIDR format in the future, this is a more flexible check:
-		if _, ipNet, err := net.ParseCIDR(whitelistedIP); err == nil && ipNet.Contains(net.ParseIP(ip)) {
+func IsPaystackIPWhitelisted(clientIP string) bool {
+	for _, ip := range paystackIPs {
+		if clientIP == ip {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -275,14 +272,19 @@ func VerifyPaystackTransaction(reference string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	req.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
+	req.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SK"))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return false, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			
+		}
+	}(resp.Body)
 
 	var result PaystackVerifyResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {

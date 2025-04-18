@@ -66,3 +66,11 @@ func (r *PaymentRepoPG) DeleteByID(id uuid.UUID) error {
 	}
 	return nil
 }
+
+func (r *PaymentRepoPG) GetByTransactionRef(ref string) (*models.Payment, error) {
+	payment := &models.Payment{}
+	if err := r.db.Where("transaction_ref = ?", ref).First(payment).Error; err != nil {
+		return nil, err
+	}
+	return payment, nil
+}
