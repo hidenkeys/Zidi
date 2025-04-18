@@ -16,6 +16,7 @@ import (
 	"gorm.io/gorm"
 	"io"
 	"log"
+	"net"
 	"net/smtp"
 
 	//"log"
@@ -167,6 +168,30 @@ func SendEmail0(toEmail, subject, htmlBody string) error {
 
 }
 
+// List of Paystack webhook IPs (you can update these if Paystack changes them)
+var paystackIPWhitelist = []string{
+	"52.31.139.75",
+	"52.49.173.169",
+	"52.214.14.220",
+}
+
+// IsPaystackIPWhitelisted checks if the request IP is in the known Paystack IPs
+func IsPaystackIPWhitelisted(ip string) bool {
+	ip = strings.TrimSpace(ip)
+
+	for _, whitelistedIP := range paystackIPWhitelist {
+		if ip == whitelistedIP {
+			return true
+		}
+		// In case IPs are coming in CIDR format in the future, this is a more flexible check:
+		if _, ipNet, err := net.ParseCIDR(whitelistedIP); err == nil && ipNet.Contains(net.ParseIP(ip)) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // PaystackResponse holds the response from Paystack API
 type PaystackResponse struct {
 	Status  bool   `json:"status"`
@@ -230,6 +255,44 @@ func CreatePaystackPaymentLink(email string, amount int, campaignID, organizatio
 	}
 
 	return paystackResp.Data.AuthorizationURL, nil
+}
+
+type PaystackVerifyResponse struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		Amount   int    `json:"amount"`
+		Status   string `json:"status"`
+		Ref      string `json:"reference"`
+		Currency string `json:"currency"`
+	} `json:"data"`
+}
+
+func VerifyPaystackTransaction(reference string) (bool, error) {
+	url := fmt.Sprintf("https://api.paystack.co/transaction/verify/%s", reference)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return false, err
+	}
+	req.Header.Add("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY"))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	var result PaystackVerifyResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return false, err
+	}
+
+	if result.Status && result.Data.Status == "success" {
+		return true, nil
+	}
+	return false, nil
 }
 
 // FlutterwaveResponse defines the response structure
