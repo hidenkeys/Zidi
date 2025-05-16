@@ -142,6 +142,27 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 	case 3:
 		session.Customer.Email = c.Text()
 		session.Step++
+		var coupon models.Coupon
+
+		// Find the first unredeemed coupon for a specific campaign
+		if err := db.
+			Where("campaign_id = ? AND redeemed = false", session.CampaignID).
+			First(&coupon).Error; err != nil {
+
+			if err == gorm.ErrRecordNotFound {
+				return c.Send("❌ No available coupons at the moment.")
+			}
+
+			log.Println("❌ Error retrieving coupon:", err)
+			return c.Send("❌ An error occurred while fetching a coupon. Please try again later.")
+		}
+
+		// Coupon found, send it to the user
+
+		err := utils.SendEmail0(session.Customer.Email, "Your Zidi Campaign Couponn Code", "Your Zidi campaign coupon code is "+coupon.Code)
+		if err != nil {
+			return c.Send("❌ An error occurred while fetching a coupon. Please try again later.")
+		}
 		return c.Send("📞 Please provide your phone number:")
 
 	case 4:
