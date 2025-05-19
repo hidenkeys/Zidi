@@ -270,7 +270,8 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		// Move to coupon validation step
 		session.Step = 8
 		clearKeyboard := &tele.ReplyMarkup{RemoveKeyboard: true}
-		return c.Send("🎟 Please enter your coupon code to complete the registration.", clearKeyboard)
+		//return c.Send("🎟 Please enter your coupon code to complete the registration.", clearKeyboard)
+		return c.Send("🎟 Please enter the coupon code sent to your email.", clearKeyboard)
 
 	case 8: // Step 9: Validate coupon code
 		couponCode := c.Text()
