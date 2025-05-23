@@ -217,7 +217,7 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 
 		session.Customer.Network = strings.ToUpper(network) // optional: normalize
 		session.Step++
-		return c.Send("💬 Any feedback you'd like to share?", &tele.ReplyMarkup{RemoveKeyboard: true})
+		return c.Send("💬 How do you like the experience so far?", &tele.ReplyMarkup{RemoveKeyboard: true})
 
 	case 6:
 		session.Customer.Feedback = c.Text()
