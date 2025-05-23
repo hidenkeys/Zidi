@@ -1,6 +1,7 @@
 package main
 
 import (
+	fiberprometheus "github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -59,6 +60,12 @@ func main() {
 		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
+
+	// Prometheus metrics middleware
+	prometheus := fiberprometheus.New("zidi_backend")
+	prometheus.RegisterAt(app, "/metrics")
+	app.Use(prometheus.Middleware)
+
 	userAuth := middleware.AuthMiddleware(db, string(jwtSecret), "user", "admin", "zidi")
 	//app.Post("/api/v1/auth/login", server.LoginUser)
 	//app.Post("/api/v1/flutterwave/webhook", server.PostFlutterwaveWebhook)
