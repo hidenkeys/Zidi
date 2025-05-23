@@ -370,7 +370,7 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 
 		// Final success message
 		delete(sessions, userID)
-		return c.Send(fmt.Sprintf("🎉 Congratulations! Your coupon has been successfully redeemed.\nAmount paid: ₦%.2f\nThank you for participating!", session.Amount))
+		return c.Send(fmt.Sprintf("🎉 Congratulations! Your coupon has been successfully redeemed.\nAmount paid: ₦%.2f\nThank you for participating!\n \n 👉 Follow @zidibot on Instagram, X & TikTok to join our next survey and win again!", session.Amount))
 	}
 
 	return nil

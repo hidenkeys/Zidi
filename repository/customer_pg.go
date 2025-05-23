@@ -76,3 +76,20 @@ func (r *CustomerPG) GetAllByOrganization(orgID uuid.UUID, limit, offset int) ([
 
 	return customers, total, nil
 }
+
+func (r *CustomerPG) GetAllByCampaign(campaignID uuid.UUID, limit, offset int) ([]models.Customer, int64, error) {
+	var customers []models.Customer
+	var total int64
+
+	// Count total customers for the campaign
+	if err := r.db.Model(&models.Customer{}).Where("campaign_id = ?", campaignID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply limit and offset for pagination
+	if err := r.db.Where("campaign_id = ?", campaignID).Limit(limit).Offset(offset).Find(&customers).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return customers, total, nil
+}

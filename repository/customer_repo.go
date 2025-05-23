@@ -12,4 +12,5 @@ type CustomerRepository interface {
 	GetByID(id uuid.UUID) (*models.Customer, error)
 	GetAll(limit, offset int) ([]models.Customer, int64, error)
 	GetAllByOrganization(orgID uuid.UUID, limit, offset int) ([]models.Customer, int64, error)
+	GetAllByCampaign(campaignID uuid.UUID, limit, offset int) ([]models.Customer, int64, error)
 }

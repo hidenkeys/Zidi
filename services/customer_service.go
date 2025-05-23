@@ -78,6 +78,20 @@ func (s *CustomerService) GetCustomersByOrganization(ctx context.Context, orgID 
 	return finalCustomers, count, nil
 }
 
+func (s *CustomerService) GetCustomersByCampaign(ctx context.Context, campaignID uuid.UUID, limit, offset int) ([]api.Customer, int64, error) {
+	customers, count, err := s.customerRepo.GetAllByCampaign(campaignID, limit, offset)
+	if err != nil {
+		return nil, count, err
+	}
+
+	var finalCustomers []api.Customer
+	for _, customer := range customers {
+		finalCustomers = append(finalCustomers, *mapToAPICustomer(&customer))
+	}
+
+	return finalCustomers, count, nil
+}
+
 func (s *CustomerService) UpdateCustomer(ctx context.Context, id uuid.UUID, req *api.Customer) (*api.Customer, error) {
 	updateData := &models.Customer{
 		FirstName:      req.FirstName,

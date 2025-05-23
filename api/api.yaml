@@ -605,6 +605,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Customer'
 
+
   /customers/organization:
       get:
         summary: Get all customers for a specific organization
@@ -647,7 +648,48 @@ paths:
             description: Missing or invalid organizationId
           '404':
             description: No customers found for this organization
-
+  /customers/campaign:
+    get:
+      summary: Get all customers for a specific campaign
+      operationId: getCustomersByCampaign
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: campaignId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of customers to return (pagination)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: offset
+          in: query
+          description: Number of customers to skip before starting to return results
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+      responses:
+        '200':
+          description: List of customers for the specified campaign
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+        '400':
+          description: Missing or invalid campaignID
+        '404':
+          description: No customers found for this campaign
   /customers/{id}:
       get:
         summary: Get a customer by ID

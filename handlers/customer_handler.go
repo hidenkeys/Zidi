@@ -93,6 +93,31 @@ func (s Server) GetCustomersByOrganization(c *fiber.Ctx, params api.GetCustomers
 	})
 }
 
+func (s Server) GetCustomersByCampaign(c *fiber.Ctx, params api.GetCustomersByCampaignParams) error {
+	limit := 10
+	offset := 0
+
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+	customers, count, err := s.customerService.GetCustomersByCampaign(context.Background(), params.CampaignId, limit, offset)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(api.Error{
+			ErrorCode: "500",
+			Message:   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"Message": "Success",
+		"Count":   count,
+		"Data":    customers,
+	})
+}
+
 func (s Server) DeleteCustomer(c *fiber.Ctx, id openapi_types.UUID) error {
 	if id == uuid.Nil {
 		return c.Status(fiber.StatusBadRequest).JSON(api.Error{
