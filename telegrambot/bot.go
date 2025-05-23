@@ -1,9 +1,11 @@
 package telegrambot
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/hidenkeys/zidibackend/utils"
+	"html/template"
 	"log"
 	"os"
 	"strconv"
@@ -17,6 +19,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type createOrgaization struct {
+	Name       string
+	CouponCode string
+}
 type Session struct {
 	CampaignID      uuid.UUID
 	OrganizationID  uuid.UUID
@@ -158,8 +164,26 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		}
 
 		// Coupon found, send it to the user
+		tmp := createOrgaization{
+			Name:       session.Customer.FirstName + " " + session.Customer.LastName,
+			CouponCode: coupon.Code,
+		}
 
-		err := utils.SendEmail0(session.Customer.Email, "Your Zidi Campaign Couponn Code", "Your Zidi campaign coupon code is "+coupon.Code)
+		tmpl, err := template.ParseFiles("Zidi-coupon-code-email-template.html")
+		if err != nil {
+			log.Fatalf("Error loading template: %v", err)
+		}
+
+		// Parse the template with the receipt data
+		var tpl bytes.Buffer
+		if err := tmpl.Execute(&tpl, tmp); err != nil {
+			log.Fatalf("Error executing template: %v", err)
+		}
+
+		// Convert parsed template to a string
+		createBody := tpl.String()
+
+		err = utils.SendEmail0(string(session.Customer.Email), "Your Zidi Campaign Coupon Code", createBody)
 		if err != nil {
 			return c.Send("❌ An error occurred while fetching a coupon. Please try again later.")
 		}
