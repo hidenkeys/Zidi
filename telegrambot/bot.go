@@ -3,6 +3,7 @@ package telegrambot
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/hidenkeys/zidibackend/utils"
 	"html/template"
@@ -155,7 +156,7 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 			Where("campaign_id = ? AND redeemed = false", session.CampaignID).
 			First(&coupon).Error; err != nil {
 
-			if err == gorm.ErrRecordNotFound {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return c.Send("❌ No available coupons at the moment.")
 			}
 
@@ -183,7 +184,7 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		// Convert parsed template to a string
 		createBody := tpl.String()
 
-		err = utils.SendEmail0(string(session.Customer.Email), "Your Zidi Campaign Coupon Code", createBody)
+		err = utils.SendEmail0(session.Customer.Email, "Your Zidi Campaign Coupon Code", createBody)
 		if err != nil {
 			return c.Send("❌ An error occurred while fetching a coupon. Please try again later.")
 		}
