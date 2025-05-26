@@ -1,12 +1,9 @@
 package telegrambot
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/hidenkeys/zidibackend/utils"
-	"html/template"
 	"log"
 	"os"
 	"strconv"
@@ -151,40 +148,41 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		session.Step++
 		var coupon models.Coupon
 
-		// Find the first unredeemed coupon for a specific campaign
-		if err := db.
-			Where("campaign_id = ? AND redeemed = false", session.CampaignID).
-			First(&coupon).Error; err != nil {
+		//// Find the first unredeemed coupon for a specific campaign
+		//if err := db.
+		//	Where("campaign_id = ? AND redeemed = false", session.CampaignID).
+		//	First(&coupon).Error; err != nil {
+		//
+		//	if errors.Is(err, gorm.ErrRecordNotFound) {
+		//		return c.Send("❌ No available coupons at the moment.")
+		//	}
+		//
+		//	log.Println("❌ Error retrieving coupon:", err)
+		//	return c.Send("❌ An error occurred while fetching a coupon. Please try again later.")
+		//}
+		//
+		//// Coupon found, send it to the user
+		//tmp := createOrgaization{
+		//	Name:       session.Customer.FirstName + " " + session.Customer.LastName,
+		//	CouponCode: coupon.Code,
+		//}
+		//
+		//tmpl, err := template.ParseFiles("Zidi-coupon-code-email-template.html")
+		//if err != nil {
+		//	log.Fatalf("Error loading template: %v", err)
+		//}
+		//
+		//// Parse the template with the receipt data
+		//var tpl bytes.Buffer
+		//if err := tmpl.Execute(&tpl, tmp); err != nil {
+		//	log.Fatalf("Error executing template: %v", err)
+		//}
+		//
+		//// Convert parsed template to a string
+		//createBody := tpl.String()
 
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return c.Send("❌ No available coupons at the moment.")
-			}
-
-			log.Println("❌ Error retrieving coupon:", err)
-			return c.Send("❌ An error occurred while fetching a coupon. Please try again later.")
-		}
-
-		// Coupon found, send it to the user
-		tmp := createOrgaization{
-			Name:       session.Customer.FirstName + " " + session.Customer.LastName,
-			CouponCode: coupon.Code,
-		}
-
-		tmpl, err := template.ParseFiles("Zidi-coupon-code-email-template.html")
-		if err != nil {
-			log.Fatalf("Error loading template: %v", err)
-		}
-
-		// Parse the template with the receipt data
-		var tpl bytes.Buffer
-		if err := tmpl.Execute(&tpl, tmp); err != nil {
-			log.Fatalf("Error executing template: %v", err)
-		}
-
-		// Convert parsed template to a string
-		createBody := tpl.String()
-
-		err = utils.SendEmail0(session.Customer.Email, "Your Zidi Campaign Coupon Code", createBody)
+		//err = utils.SendEmail0(session.Customer.Email, "Your Zidi Campaign Coupon Code", createBody)
+		err := utils.SendEmail0(session.Customer.Email, "Your Zidi Campaign Couponn Code", "Your Zidi campaign coupon code is "+coupon.Code)
 		if err != nil {
 			return c.Send("❌ An error occurred while fetching a coupon. Please try again later.")
 		}
