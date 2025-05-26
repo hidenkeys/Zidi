@@ -15,7 +15,6 @@ import (
 	brevo "github.com/sendinblue/APIv3-go-library/v2/lib"
 	"gorm.io/gorm"
 	"io"
-	"log"
 	"net/smtp"
 
 	//"log"
@@ -116,13 +115,13 @@ func CheckUserRole(c *fiber.Ctx, allowedRoles ...string) bool {
 	return false
 }
 
-// function to send email
+// send email zoho
 func SendEmail00(to, subject, body string) error {
-	from := "teniolasobande04@gmail.com"
-	password := "vndt vleo ccfc tcqt"
+	from := "teniola.sobande@zidihq.com"
+	password := "EVYvaG9HJGrh"
 
-	// Set up authentication information.
-	auth := smtp.PlainAuth("", from, password, "smtp.gmail.com")
+	// Use Zoho SMTP host in PlainAuth
+	auth := smtp.PlainAuth("", from, password, "smtp.zoho.com")
 
 	msg := "From: " + from + "\n" +
 		"To: " + to + "\n" +
@@ -131,9 +130,9 @@ func SendEmail00(to, subject, body string) error {
 		"Content-Type: text/html; charset=\"UTF-8\";\n\n" +
 		body
 
-	err := smtp.SendMail("smtp.gmail.com:587", auth, from, []string{to}, []byte(msg))
+	err := smtp.SendMail("smtp.zoho.com:587", auth, from, []string{to}, []byte(msg))
 	if err != nil {
-		log.Fatalf("Error sending email: %v", err)
+		return fmt.Errorf("error sending email: %w", err)
 	}
 	return nil
 }
@@ -282,7 +281,7 @@ func VerifyPaystackTransaction(reference string) (bool, error) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			
+
 		}
 	}(resp.Body)
 
