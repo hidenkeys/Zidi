@@ -8,7 +8,9 @@ import (
 	"github.com/hidenkeys/zidibackend/utils"
 	"html/template"
 	"log"
+	"net/mail"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -36,6 +38,7 @@ type Session struct {
 }
 
 var sessions = make(map[int64]*Session)
+var phoneRegex = regexp.MustCompile(`^0\d{10}$`)
 
 // StartBot initializes and runs the Telegram bot
 // StartBot initializes and runs the Telegram bot with a database connection
@@ -147,7 +150,15 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		return c.Send("📧 What’s your email address?")
 
 	case 3:
-		session.Customer.Email = c.Text()
+		emailInput := c.Text()
+		// Validate email format
+		_, err := mail.ParseAddress(emailInput)
+		if err != nil {
+			// Invalid email format, ask again without incrementing step
+			return c.Send("❌ The email address you entered is not valid. Please enter a valid email address.")
+		}
+
+		session.Customer.Email = emailInput
 		session.Step++
 		var coupon models.Coupon
 
@@ -191,7 +202,13 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 		return c.Send("📞 Please provide your phone number:")
 
 	case 4:
-		session.Customer.Phone = c.Text()
+		phoneInput := c.Text()
+		// Validate phone number format using regex
+		if !phoneRegex.MatchString(phoneInput) {
+			return c.Send("❌ Invalid phone number format. Please enter your phone number in this format: 08156579909 (no spaces, no country code).")
+		}
+
+		session.Customer.Phone = phoneInput
 		session.Step++
 
 		networkKeyboard := &tele.ReplyMarkup{ResizeKeyboard: true}
