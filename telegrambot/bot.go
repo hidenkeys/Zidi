@@ -69,9 +69,9 @@ func StartBot(db *gorm.DB) {
 		}
 
 		var campaign models.Campaign
-		if err := db.Where("id = ?", campaignID).First(&campaign).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				return c.Send("❌ Campaign not found.")
+		if err := db.Where("id = ? AND status = ?", campaignID, "active").First(&campaign).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return c.Send("❌ Campaign not found or not active.")
 			}
 			return c.Send("❌ An error occurred while fetching the campaign.")
 		}
