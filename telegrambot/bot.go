@@ -371,7 +371,7 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 			CampaignID:     session.CampaignID,
 			CustomerID:     session.Customer.ID,
 			Network:        airtimeRespose.Network,
-			PhoneNumber:    airtimeRespose.Phone,
+			PhoneNumber:    session.Customer.Phone,
 			TxReference:    airtimeRespose.RequestID,
 			Status:         airtimeRespose.Status,
 			Amount:         session.Amount,

@@ -39,3 +39,9 @@ func (r *responsePG) CreateResponse(response *models.Response) (*models.Response
 	}
 	return response, nil
 }
+
+func (r *responsePG) GetResponseCountByQuestion(questionID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.Model(&models.Response{}).Where("question_id = ?", questionID).Count(&count).Error
+	return count, err
+}

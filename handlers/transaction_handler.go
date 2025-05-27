@@ -20,6 +20,21 @@ func (s Server) ListTransactions(c *fiber.Ctx, params api.ListTransactionsParams
 		offset = *params.Offset
 	}
 
+	// Check for organizationId
+	if params.OrganizationId != nil {
+		transactions, count, err := s.transactionService.GetTransactionsByOrganization(context.Background(), *params.OrganizationId, limit, offset)
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(api.Error{
+				ErrorCode: "500",
+				Message:   err.Error(),
+			})
+		}
+		return c.Status(http.StatusOK).JSON(fiber.Map{
+			"transactions": transactions,
+			"count":        count,
+		})
+	}
+
 	// Fetch the list of transactions
 	transactions, count, err := s.transactionService.GetAllTransactions(context.Background(), limit, offset)
 	if err != nil {

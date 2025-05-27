@@ -10,13 +10,16 @@ import (
 )
 
 type BalanceService struct {
-	balanceRepo repository.BalanceRepository
+	balanceRepo  repository.BalanceRepository
+	campaignRepo repository.CampaignRepository
 }
 
-func NewBalanceService(balanceRepo repository.BalanceRepository) *BalanceService {
-	return &BalanceService{balanceRepo: balanceRepo}
+func NewBalanceService(balanceRepo repository.BalanceRepository, campaignRepo repository.CampaignRepository) *BalanceService {
+	return &BalanceService{
+		balanceRepo:  balanceRepo,
+		campaignRepo: campaignRepo,
+	}
 }
-
 func (s *BalanceService) CreateBalance(ctx context.Context, req *api.Balance) (*api.Balance, error) {
 	// Check if a balance already exists for this CampaignId
 	existingBalance, err := s.balanceRepo.GetBalanceByCampaign(req.CampaignId)
@@ -55,7 +58,17 @@ func (s *BalanceService) GetBalanceByCampaign(ctx context.Context, campaignId uu
 		return nil, nil
 	}
 
-	return mapToAPIBalance(balance), nil
+	campaign, err := s.campaignRepo.GetByID(campaignId)
+	if err != nil {
+		return nil, err
+	}
+
+	bal := mapToAPIBalance(balance)
+	if campaign != nil {
+		bal.CampaignName = &campaign.CampaignName
+	}
+
+	return bal, nil
 }
 
 func (s *BalanceService) GetAllBalances(ctx context.Context, limit, offset int) ([]api.Balance, error) {
@@ -66,7 +79,20 @@ func (s *BalanceService) GetAllBalances(ctx context.Context, limit, offset int) 
 
 	var finalBalances []api.Balance
 	for _, balance := range balances {
-		finalBalances = append(finalBalances, *mapToAPIBalance(&balance))
+		campaign, err := s.campaignRepo.GetByID(balance.CampaignId)
+		if err != nil {
+			return nil, err
+		}
+
+		campaignName := ""
+		if campaign != nil {
+			campaignName = campaign.CampaignName
+		}
+
+		bal := mapToAPIBalance(&balance)
+		bal.CampaignName = &campaignName
+
+		finalBalances = append(finalBalances, *bal)
 	}
 
 	return finalBalances, nil

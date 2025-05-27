@@ -27,8 +27,11 @@ func main() {
 	orgRepo := repository.NewOrganizationRepoPG(db)
 	orgService := services.NewOrganisationService(orgRepo)
 
+	campaignRepo := repository.NewCampaignRepoPG(db)
+	campaignService := services.NewCampaignService(campaignRepo)
+
 	balanceRepo := repository.NewBalanceRepoPG(db)
-	balanceService := services.NewBalanceService(balanceRepo)
+	balanceService := services.NewBalanceService(balanceRepo, campaignRepo)
 
 	transactionRepo := repository.NewTransactionRepoPG(db)
 	transactionService := services.NewTransactionService(transactionRepo)
@@ -39,14 +42,11 @@ func main() {
 	customerRepo := repository.NewCustomerRepoPG(db)
 	customerService := services.NewCustomerService(customerRepo)
 
-	campaignRepo := repository.NewCampaignRepoPG(db)
-	campaignService := services.NewCampaignService(campaignRepo)
-
-	questionRepo := repository.NewQuestionRepoPG(db)
-	questionService := services.NewQuestionService(questionRepo)
-
 	responseRepo := repository.NewResponseRepoPG(db)
 	responseService := services.NewResponseService(responseRepo)
+
+	questionRepo := repository.NewQuestionRepoPG(db)
+	questionService := services.NewQuestionService(questionRepo, responseRepo)
 
 	paymentRepo := repository.NewPaymentRepoPG(db)
 	paymentService := services.NewPaymentService(paymentRepo)

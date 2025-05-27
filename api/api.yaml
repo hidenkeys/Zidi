@@ -1313,17 +1313,20 @@ paths:
           required: false
           schema:
             type: integer
-            minimum: 1
             default: 10
-          description: Number of transactions to return per page.
         - name: offset
           in: query
           required: false
           schema:
             type: integer
-            minimum: 0
             default: 0
-          description: Number of transactions to skip for pagination.
+        - name: organizationId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter by organization UUID
       responses:
         "200":
           description: List of transactions
@@ -1332,13 +1335,13 @@ paths:
               schema:
                 type: object
                 properties:
-                    totalCount:
-                      type: integer
-                      description: Total number of transactions in the database.
-                    transactions:
-                      type: array
-                      items:
-                        $ref: "#/components/schemas/Transaction"
+                  count:
+                    type: integer
+                  transactions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Transaction"
+
 
     post:
       summary: Create a new transaction
@@ -1806,6 +1809,9 @@ components:
         amount:
           type: number
           format: float
+        campaignName:
+          type: string
+          description: "Name of the campaign linked to this balance"
 
     CreateBalanceRequest:
         type: object
@@ -1940,6 +1946,7 @@ components:
         - campaignId
         - text
         - type
+        - responseCount
       properties:
         id:
           type: string
@@ -1957,6 +1964,8 @@ components:
           items:
             type: string
           nullable: true
+        responseCount:
+          type: integer
     Response:
       type: object
       required:

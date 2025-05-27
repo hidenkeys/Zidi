@@ -14,10 +14,14 @@ import (
 
 type QuestionService struct {
 	questionRepo repository.QuestionRepository
+	responseRepo repository.ResponseRepository
 }
 
-func NewQuestionService(questionRepo repository.QuestionRepository) *QuestionService {
-	return &QuestionService{questionRepo: questionRepo}
+func NewQuestionService(questionRepo repository.QuestionRepository, responseRepo repository.ResponseRepository) *QuestionService {
+	return &QuestionService{
+		questionRepo: questionRepo,
+		responseRepo: responseRepo,
+	}
 }
 
 func (s *QuestionService) CreateQuestions(ctx context.Context, reqs []api.Question) ([]api.Question, error) {
@@ -67,7 +71,12 @@ func (s *QuestionService) GetQuestionsByCampaign(ctx context.Context, campaignID
 
 	var finalQuestions []api.Question
 	for _, question := range questions {
-		finalQuestions = append(finalQuestions, *mapToAPIQuestion(&question))
+		count64, _ := s.responseRepo.GetResponseCountByQuestion(question.ID)
+		count := int(count64) // Convert int64 to int
+		q := mapToAPIQuestion(&question)
+		q.ResponseCount = count
+
+		finalQuestions = append(finalQuestions, *q)
 	}
 
 	return finalQuestions, nil
