@@ -407,6 +407,14 @@ func handleResponses(c tele.Context, db *gorm.DB) error {
 			// Not returning here, but you can return if it's critical
 		}
 
+		// <-- Insert the customer status update here:
+		err = db.Model(&models.Customer{}).
+			Where("id = ?", session.Customer.ID).
+			Update("status", "active").Error
+		if err != nil {
+			log.Println("❌ Error updating customer status:", err)
+		}
+
 		// Transaction created successfully
 		log.Println("✅ Transaction created:", tx.TxReference)
 
