@@ -4,6 +4,7 @@ import (
 	"context"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/google/uuid"
 	"github.com/hidenkeys/zidibackend/api"
 	"github.com/hidenkeys/zidibackend/models"
@@ -120,6 +121,10 @@ func (s *CustomerService) DeleteCustomer(ctx context.Context, id uuid.UUID) erro
 
 // Helper function to convert models.Customer to api.Customer
 func mapToAPICustomer(customer *models.Customer) *api.Customer {
+	email := customer.Email
+	if !govalidator.IsEmail(email) {
+		email = "unknown@example.com" // or handle as needed
+	}
 	return &api.Customer{
 		Id:             customer.ID,
 		FirstName:      customer.FirstName,
