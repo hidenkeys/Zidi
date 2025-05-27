@@ -27,9 +27,8 @@ func (r *TransactionRepoPG) GetAll(limit, offset int) ([]models.Transaction, int
 	var total int64
 
 	r.db.Model(&models.Transaction{}).Count(&total)
-	err := r.db.Limit(limit).Offset(offset).Find(&transactions)
-	if err.Error != nil {
-		return nil, 0, err.Error
+	if err := r.db.Order("created_at DESC").Limit(limit).Offset(offset).Find(&transactions).Error; err != nil {
+		return nil, 0, err
 	}
 	return transactions, total, nil
 }
@@ -57,9 +56,12 @@ func (r *TransactionRepoPG) GetByOrganization(orgID uuid.UUID, limit, offset int
 	var total int64
 
 	r.db.Model(&models.Transaction{}).Where("organization_id = ?", orgID).Count(&total)
-	err := r.db.Where("organization_id = ?", orgID).Limit(limit).Offset(offset).Find(&transactions)
-	if err.Error != nil {
-		return nil, 0, err.Error
+	if err := r.db.Where("organization_id = ?", orgID).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&transactions).Error; err != nil {
+		return nil, 0, err
 	}
 	return transactions, total, nil
 }

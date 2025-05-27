@@ -52,8 +52,8 @@ func (r *CustomerPG) GetAll(limit, offset int) ([]models.Customer, int64, error)
 		return nil, 0, err
 	}
 
-	// Apply limit and offset for pagination
-	if err := r.db.Limit(limit).Offset(offset).Find(&customers).Error; err != nil {
+	// Apply order, limit and offset for pagination
+	if err := r.db.Order("created_at DESC").Limit(limit).Offset(offset).Find(&customers).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -69,8 +69,12 @@ func (r *CustomerPG) GetAllByOrganization(orgID uuid.UUID, limit, offset int) ([
 		return nil, 0, err
 	}
 
-	// Apply limit and offset for pagination
-	if err := r.db.Where("organization_id = ?", orgID).Limit(limit).Offset(offset).Find(&customers).Error; err != nil {
+	// Apply order, limit and offset for pagination
+	if err := r.db.Where("organization_id = ?", orgID).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&customers).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -86,8 +90,12 @@ func (r *CustomerPG) GetAllByCampaign(campaignID uuid.UUID, limit, offset int) (
 		return nil, 0, err
 	}
 
-	// Apply limit and offset for pagination
-	if err := r.db.Where("campaign_id = ?", campaignID).Limit(limit).Offset(offset).Find(&customers).Error; err != nil {
+	// Apply order, limit and offset for pagination
+	if err := r.db.Where("campaign_id = ?", campaignID).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&customers).Error; err != nil {
 		return nil, 0, err
 	}
 
