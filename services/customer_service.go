@@ -123,14 +123,14 @@ func (s *CustomerService) DeleteCustomer(ctx context.Context, id uuid.UUID) erro
 func mapToAPICustomer(customer *models.Customer) *api.Customer {
 	email := customer.Email
 	if !govalidator.IsEmail(email) {
-		email = "unknown@example.com" // or handle as needed
+		email = "unknown@example.com" // replace or log as needed
 	}
 	return &api.Customer{
 		Id:             customer.ID,
 		FirstName:      customer.FirstName,
 		LastName:       customer.LastName,
 		Phone:          customer.Phone,
-		Email:          openapi_types.Email(customer.Email),
+		Email:          openapi_types.Email(email), // use validated/sanitized email
 		Feedback:       customer.Feedback,
 		Network:        customer.Network,
 		Amount:         float32(customer.Amount),
