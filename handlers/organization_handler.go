@@ -137,7 +137,7 @@ func (s Server) CreateOrganization(c *fiber.Ctx) error {
 	// Convert parsed template to a string
 	createBody := tpl.String()
 
-	err = utils.SendEmail0(string(defaultUser.Email), "Welcome to Zidi", createBody)
+	err = utils.SendEmail00(string(defaultUser.Email), "Welcome to Zidi", createBody)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(api.Error{
 			ErrorCode: "500",

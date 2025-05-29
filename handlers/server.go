@@ -249,7 +249,7 @@ func (s Server) PostFlutterwaveWebhook(c *fiber.Ctx) error {
 
 		createBody := tpl.String()
 
-		err = utils.SendEmail0(string(response.Email), "Complete your "+campaign.CampaignName+" Campaign Payment", createBody)
+		err = utils.SendEmail00(string(response.Email), "Complete your "+campaign.CampaignName+" Campaign Payment", createBody)
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(api.Error{
 				ErrorCode: "500",
